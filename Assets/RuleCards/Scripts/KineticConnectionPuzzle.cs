@@ -164,7 +164,7 @@ void OnGUI()
         ResponsiveIMGUI.End(previous);
     }
 
-    void InputGrid(Rect grid)
+void InputGrid(Rect grid)
     {
         Event e=Event.current;
         Vector2Int cell=MouseCell(grid,e.mousePosition);
@@ -272,12 +272,21 @@ void OnGUI()
         GUI.DrawTexture(new Rect(v.x-s*.5f,v.y-s*.5f,s,s),pixel);
     }
 
-    void Line(Vector2 a,Vector2 b,Color c,float width)
+void Line(Vector2 a,Vector2 b,Color c,float width)
     {
-        Vector2 d=b-a; Matrix4x4 m=GUI.matrix; GUI.color=c;
-        GUIUtility.RotateAroundPivot(Mathf.Atan2(d.y,d.x)*Mathf.Rad2Deg,a);
-        GUI.DrawTexture(new Rect(a.x,a.y-width*.5f,d.magnitude,width),pixel);
-        GUI.matrix=m;
+        GUI.color=c;
+        float dx=Mathf.Abs(b.x-a.x);
+        float dy=Mathf.Abs(b.y-a.y);
+        if(dx>=dy)
+        {
+            float left=Mathf.Min(a.x,b.x);
+            GUI.DrawTexture(new Rect(left,a.y-width*.5f,dx,width),pixel);
+        }
+        else
+        {
+            float top=Mathf.Min(a.y,b.y);
+            GUI.DrawTexture(new Rect(a.x-width*.5f,top,width,dy),pixel);
+        }
     }
 
     void Status(string value){ message=value; messageUntil=Time.unscaledTime+1.3f; }
