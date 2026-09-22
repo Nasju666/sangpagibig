@@ -33,5 +33,13 @@ void SetVisible(bool value)
 
     void OnTriggerEnter(Collider other) { if (!collected && other.GetComponent<CharacterController>() != null) nearby = true; }
     void OnTriggerExit(Collider other) { if (other.GetComponent<CharacterController>() != null) nearby = false; }
-    void OnGUI() { if (nearby && !collected) GUI.Box(new Rect(20, Screen.height - 95, 430, 65), displayName + "\nPress E to archive this card"); }
+void OnGUI()
+    {
+        if(!nearby || collected) return;
+        float vw, vh;
+        Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
+        GUI.Box(ResponsiveIMGUI.BottomLeft(vw, vh, 430f, 65f),
+            displayName + "\nPress E to archive this card");
+        ResponsiveIMGUI.End(previous);
+    }
 }

@@ -107,11 +107,15 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     }
 
     // Display connection status in game (optional)
-    private void OnGUI()
+private void OnGUI()
     {
         if (!showDebugLogs) return;
 
-        GUILayout.BeginArea(new Rect(10, 10, 300, 100));
+        float vw, vh;
+        Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
+        float margin = Mathf.Clamp(vw * 0.015f, 8f, 18f);
+        float width = Mathf.Min(320f, Mathf.Max(180f, vw - margin * 2f));
+        GUILayout.BeginArea(new Rect(margin, margin, width, 110f), GUI.skin.box);
         GUILayout.Label($"Photon Status: {PhotonNetwork.NetworkClientState}");
         if (IsInRoom)
         {
@@ -119,5 +123,6 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
             GUILayout.Label($"Players: {PhotonNetwork.CurrentRoom.PlayerCount}");
         }
         GUILayout.EndArea();
+        ResponsiveIMGUI.End(previous);
     }
 }

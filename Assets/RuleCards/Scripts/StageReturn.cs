@@ -23,8 +23,13 @@ public class StageReturn : MonoBehaviour
 
     void OnTriggerEnter(Collider other) { if (other.GetComponent<CharacterController>() != null) nearby = true; }
     void OnTriggerExit(Collider other) { if (other.GetComponent<CharacterController>() != null) { nearby = false; message = ""; } }
-    void OnGUI()
+void OnGUI()
     {
-        if (nearby) GUI.Box(new Rect(20, Screen.height - 95, 520, 65), "Return to the Archive\nPress E" + (string.IsNullOrEmpty(message) ? "" : " — " + message));
+        if (!nearby) return;
+        float vw, vh;
+        Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
+        GUI.Box(ResponsiveIMGUI.BottomLeft(vw, vh, 540f, 65f),
+            "Return to the Archive\nPress E" + (string.IsNullOrEmpty(message) ? "" : " — " + message));
+        ResponsiveIMGUI.End(previous);
     }
 }

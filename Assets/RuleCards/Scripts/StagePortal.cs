@@ -33,10 +33,14 @@ void Update()
 
     void OnTriggerEnter(Collider other) { if (other.GetComponent<CharacterController>() != null) nearby = true; }
     void OnTriggerExit(Collider other) { if (other.GetComponent<CharacterController>() != null) { nearby = false; message = ""; } }
-    void OnGUI()
+void OnGUI()
     {
         if (!nearby) return;
+        float vw, vh;
+        Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
         string state = RuleCardsProgress.HasCard(requiredCard) ? "Press E to enter" : "LOCKED";
-        GUI.Box(new Rect(20, Screen.height - 95, 430, 65), portalLabel + "\n" + state + (string.IsNullOrEmpty(message) ? "" : " — " + message));
+        GUI.Box(ResponsiveIMGUI.BottomLeft(vw, vh, 480f, 65f),
+            portalLabel + "\n" + state + (string.IsNullOrEmpty(message) ? "" : " — " + message));
+        ResponsiveIMGUI.End(previous);
     }
 }

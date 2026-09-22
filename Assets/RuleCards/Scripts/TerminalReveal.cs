@@ -22,5 +22,12 @@ public class TerminalReveal : MonoBehaviour
     }
     void OnTriggerEnter(Collider other) { if (other.GetComponent<CharacterController>() != null) nearby = true; }
     void OnTriggerExit(Collider other) { if (other.GetComponent<CharacterController>() != null) nearby = false; }
-    void OnGUI() { if (nearby && !activated) GUI.Box(new Rect(20, Screen.height - 95, 430, 65), prompt + "\nPress E"); }
+void OnGUI()
+    {
+        if(!nearby || activated) return;
+        float vw, vh;
+        Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
+        GUI.Box(ResponsiveIMGUI.BottomLeft(vw, vh, 460f, 65f), prompt + "\nPress E");
+        ResponsiveIMGUI.End(previous);
+    }
 }
