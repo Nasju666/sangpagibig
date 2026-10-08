@@ -32,4 +32,12 @@ void OnGUI()
             "Return to the Archive\nPress E" + (string.IsNullOrEmpty(message) ? "" : " — " + message));
         ResponsiveIMGUI.End(previous);
     }
+
+
+void Start()
+    {
+        var beacon = GetComponent<ArchiveReturnBeacon>();
+        if (beacon == null) beacon = gameObject.AddComponent<ArchiveReturnBeacon>();
+        beacon.EnsureCue(this);
+    }
 }

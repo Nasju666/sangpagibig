@@ -14,15 +14,28 @@ public class RuleCardPickup : MonoBehaviour
         if (collected) SetVisible(false);
     }
 
-    void Update()
+void Update()
     {
-        if (nearby && !collected && Input.GetKeyDown(KeyCode.E))
+        if (nearby && !collected && Input.GetKeyDown(KeyCode.E)) TryCollect();
+    }
+
+    public bool TryCollect()
+    {
+        if (!nearby || collected) return false;
+        // A stale pickup must not replay feedback or re-grant a saved card.
+        if (RuleCardsProgress.HasCard(cardId))
         {
-            RuleCardsProgress.GrantCard(cardId);
             collected = true;
             nearby = false;
             SetVisible(false);
+            return false;
         }
+        RuleCardsProgress.GrantCard(cardId);
+        collected = true;
+        nearby = false;
+        RuleCardCelebration.Play(transform.position, displayName);
+        SetVisible(false);
+        return true;
     }
 
 void SetVisible(bool value)
