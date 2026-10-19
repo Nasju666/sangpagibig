@@ -11,7 +11,7 @@ public class StageReturn : MonoBehaviour
 
     void Update()
     {
-        if (!nearby || !Input.GetKeyDown(KeyCode.E)) return;
+        if (!nearby || MouseLook.isPaused || !Input.GetKeyDown(KeyCode.E)) return;
         if (!RuleCardsProgress.HasCard(requiredCard))
         {
             message = "The Archive will not release you. Recover the Rule Card.";

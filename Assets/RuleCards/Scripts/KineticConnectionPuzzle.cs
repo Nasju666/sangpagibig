@@ -51,6 +51,7 @@ public class KineticConnectionPuzzle : MonoBehaviour
 
     void Update()
     {
+        if(open) ArchiveModal.MarkOpen();
         if(solved || playerCamera==null) return;
         if(!open)
         {
@@ -58,7 +59,7 @@ public class KineticConnectionPuzzle : MonoBehaviour
             focused=Physics.Raycast(playerCamera.ViewportPointToRay(new Vector3(.5f,.5f)),out hit,
                 interactionDistance,~0,QueryTriggerInteraction.Ignore)
                 && (hit.transform==transform || hit.transform.IsChildOf(transform));
-            if(focused && Input.GetKeyDown(KeyCode.E)) Open();
+            if(focused && !MouseLook.isPaused && Input.GetKeyDown(KeyCode.E)) Open();
         }
         else if(Input.GetKeyDown(KeyCode.Escape)){ ResetBoard(); Close(); }
         else if(Input.GetKeyDown(KeyCode.R)){ ResetBoard(); Status("CONNECTIONS RESET"); }

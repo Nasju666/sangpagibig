@@ -1,0 +1,8 @@
+{"scene":"RuleCards_Title",
+"fog":0,"fogColor":[0.5,0.5,0.5],"fogDensity":0.01,
+"items":[
+{"p":"Main Camera","act":1,"pos":[0,1,-10],"rot":[0,0,0],"sc":[1,1,1],"mb":["FrameRateLimiter"],"cam":1},
+{"p":"Directional Light","act":1,"pos":[0,3,0],"rot":[50,330,0],"sc":[1,1,1],"light":{"t":"Directional","range":10,"i":2,"col":[1,1,1]}},
+{"p":"Global Volume","act":1,"pos":[0,0,0],"rot":[0,0,0],"sc":[1,1,1]},
+{"p":"RuleCards_TitleMenu","act":1,"pos":[0,0,0],"rot":[0,0,0],"sc":[1,1,1],"mb":["RuleCardsTitleMenu"]}
+]}

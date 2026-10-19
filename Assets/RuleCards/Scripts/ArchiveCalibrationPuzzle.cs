@@ -35,6 +35,7 @@ public class ArchiveCalibrationPuzzle : MonoBehaviour
     {
         if (open)
         {
+            ArchiveModal.MarkOpen();
             if (Input.GetKeyDown(KeyCode.Escape)) Close();
             else if (Input.GetKeyDown(KeyCode.R)) ResetBoard();
             return;
@@ -44,7 +45,7 @@ public class ArchiveCalibrationPuzzle : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(Camera.main.ViewportPointToRay(new Vector3(.5f,.5f,0)), out hit, interactionDistance, ~0, QueryTriggerInteraction.Ignore))
             canInteract = hit.collider.GetComponentInParent<ArchiveCalibrationPuzzle>() == this;
-        if (canInteract && Input.GetKeyDown(KeyCode.E)) Open();
+        if (canInteract && !MouseLook.isPaused && Input.GetKeyDown(KeyCode.E)) Open();
     }
 
     void Open()

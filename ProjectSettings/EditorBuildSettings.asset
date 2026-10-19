@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/RuleCards/Levels/RuleCards_Title.unity
+    guid: 9972989d0a6a4ab088dbc1ebc1376386
+  - enabled: 1
     path: Assets/RuleCards/Levels/ArchiveHub.unity
     guid: 078511ef4aecc414d9ee9b6cdf90a7c4
   - enabled: 1
@@ -21,6 +24,6 @@ EditorBuildSettings:
     path: Assets/RuleCards/Levels/Repository_Final.unity
     guid: 666536870a373224dbbc1c8d8ed4e3e5
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/RuleCards/Levels/Stage_04_Escape.unity
+    guid: 61b349b7ceeeeda449c86264597fde2e
   m_configObjects: {}

@@ -143,7 +143,13 @@ public void ResetPuzzle()
     {
         if(IsSolved||core==null||plateSupport==null)return;
         if(transitSeal!=null&&!transitSeal.IsLatched){contactTime=0;return;}
-        Vector3 delta=core.Body.position-platePosition;
+        // When the plate itself is the required air field (Stage 3), align to where that field really is:
+        // the field/plate were moved after platePosition was authored, which made the vault unsolvable.
+        Vector3 plate=platePosition;
+        if(requiredSupport!=null&&plateSupport.gameObject==requiredSupport.gameObject){
+            Vector3 c=plateSupport.bounds.center;plate=new Vector3(c.x,platePosition.y,c.z);
+        }
+        Vector3 delta=core.Body.position-plate;
         bool aligned=Mathf.Abs(delta.x)<.85f&&Mathf.Abs(delta.z)<.85f;
         bool directionCorrect=mode==StageMode.Gravity?core.GravityUp:!core.GravityUp;
         bool supportReady=requiredSupport==null||requiredSupport.IsSolid;

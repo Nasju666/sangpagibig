@@ -44,11 +44,12 @@ public sealed class RuleCardsSceneTransition : MonoBehaviour
     {
         switch (sceneName)
         {
-            case "ArchiveHub": sceneTitle = "THE ARCHIVE"; break;
+            case "ArchiveHub": sceneTitle = RuleCardsProgress.IsGameComplete ? "THE ARCHIVE — ESCAPED" : "THE ARCHIVE"; break;
             case "Stage_01_KineticLink": sceneTitle = "KINETIC LINK"; break;
             case "Stage_02_InvertGravity": sceneTitle = "INVERT GRAVITY"; break;
             case "Stage_03_SolidifyAir": sceneTitle = "SOLIDIFY AIR"; break;
             case "Repository_Final": sceneTitle = "THE FINAL REPOSITORY"; break;
+            case "Stage_04_Escape": sceneTitle = "THE UNWRITTEN ARCHIVE"; break;
             default: elapsed = Duration; source.Stop(); return;
         }
         elapsed = 0f;

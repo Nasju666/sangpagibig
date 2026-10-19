@@ -24,9 +24,9 @@ void Update()
             if (portalMaterial.HasProperty("_EmissionColor"))
                 portalMaterial.SetColor("_EmissionColor", stateColor * (unlocked ? 3f : 1.5f));
         }
-        if (nearby && Input.GetKeyDown(KeyCode.E))
+        if (nearby && !MouseLook.isPaused && Input.GetKeyDown(KeyCode.E))
         {
-            if (unlocked && !string.IsNullOrEmpty(destinationScene)) SceneManager.LoadScene(destinationScene);
+            if (unlocked && !string.IsNullOrEmpty(destinationScene)) SceneManager.LoadScene(RuleCardsScenes.Resolve(destinationScene));
             else message = "Required Rule Card missing: " + requiredCard;
         }
     }

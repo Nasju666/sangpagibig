@@ -21,6 +21,7 @@ public class KineticWeightDrag : MonoBehaviour
     void Update()
     {
         if(playerCamera==null||body==null)return;
+        if(MouseLook.isPaused){ if(dragging)Release(); return; }
         RaycastHit hit;
         focused=!dragging&&Physics.Raycast(playerCamera.ViewportPointToRay(new Vector3(.5f,.5f)),out hit,
             grabDistance,~0,QueryTriggerInteraction.Ignore)

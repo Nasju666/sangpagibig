@@ -8,6 +8,18 @@ public class ArchiveGravityPlayer : MonoBehaviour
     public float gravityStrength=22f, walkSpeed=4f, sprintSpeed=7f, jumpHeight=1.3f;
     public bool IsInverted { get; private set; }
     public bool IsGrounded { get; private set; }
+    /// <summary>While true, mouse look still works but walking/gravity are paused (used by Kinetic Link pulls).</summary>
+    public bool MovementLocked { get; set; }
+    [Header("Feel")]
+    public float coyoteTime=.12f, jumpBuffer=.15f;
+    /// <summary>Extra field of view in degrees; decays by itself (e.g. a Kinetic pull adds a kick).</summary>
+    public float FovKick { get; set; }
+    /// <summary>Camera shake strength in degrees, set every frame by whoever wants shake (e.g. the collapse).</summary>
+    public float Shake { get; set; }
+    /// <summary>Raised when the player lands; the argument is the impact speed in m/s.</summary>
+    public event System.Action<float> Landed;
+    float lastGroundedTime=-1, jumpPressedTime=-1, landDip;
+    bool wasGrounded;
     public Vector3 GravityDirection { get { return IsInverted ? Vector3.up : Vector3.down; } }
     CharacterController controller;
     readonly List<Behaviour> suspended=new List<Behaviour>();
@@ -45,19 +57,23 @@ public class ArchiveGravityPlayer : MonoBehaviour
         yaw+=Input.GetAxis("Mouse X")*sensitivity*Time.deltaTime*sign;
         pitch=Mathf.Clamp(pitch-Input.GetAxis("Mouse Y")*sensitivity*Time.deltaTime,-82,82);
         transform.rotation=Quaternion.Euler(0,yaw,0);
-        SimulateMovement(new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical")),Input.GetKeyDown(KeyCode.Space),Time.deltaTime);
+        if(!MovementLocked) SimulateMovement(new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical")),Input.GetKeyDown(KeyCode.Space),Time.deltaTime);
         roll=Mathf.MoveTowardsAngle(roll,IsInverted?180:0,360*Time.deltaTime);
         if(viewCamera!=null){
-            viewCamera.transform.localPosition=Vector3.Lerp(viewCamera.transform.localPosition,new Vector3(0,sign*.65f,0),8*Time.deltaTime);
-            viewCamera.transform.localRotation=Quaternion.Euler(0,0,roll)*Quaternion.Euler(pitch,0,0);
-            viewCamera.fieldOfView=Mathf.Lerp(viewCamera.fieldOfView,Input.GetKey(KeyCode.LeftShift)?72:60,8*Time.deltaTime);
+            landDip=Mathf.MoveTowards(landDip,0,Time.deltaTime*1.1f);
+            FovKick=Mathf.MoveTowards(FovKick,0,Time.deltaTime*28);
+            viewCamera.transform.localPosition=Vector3.Lerp(viewCamera.transform.localPosition,new Vector3(0,sign*(.65f-landDip),0),14*Time.deltaTime);
+            float n=Time.time*26f;
+            Vector3 shake=new Vector3(Mathf.PerlinNoise(n,.3f)-.5f,Mathf.PerlinNoise(.7f,n)-.5f,(Mathf.PerlinNoise(n,n*.5f)-.5f)*.6f)*(Shake*2f);
+            viewCamera.transform.localRotation=Quaternion.Euler(0,0,roll)*Quaternion.Euler(pitch,0,0)*Quaternion.Euler(shake);
+            viewCamera.fieldOfView=Mathf.Lerp(viewCamera.fieldOfView,(Input.GetKey(KeyCode.LeftShift)?72:60)+FovKick,8*Time.deltaTime);
         }
     }
 
     public void SetInverted(bool inverted)
     {
         if(IsInverted==inverted)return;
-        IsInverted=inverted; verticalSpeed=0; IsGrounded=false;
+        IsInverted=inverted; verticalSpeed=0; IsGrounded=false; wasGrounded=false; lastGroundedTime=-1;
     }
 
     public void SimulateMovement(Vector2 input,bool jump,float dt)
@@ -67,8 +83,20 @@ public class ArchiveGravityPlayer : MonoBehaviour
         RaycastHit hit;Vector3 gravity=GravityDirection;
         IsGrounded=Physics.SphereCast(transform.TransformPoint(controller.center),controller.radius*.9f,gravity,out hit,
             controller.height*.5f-controller.radius+.18f,~0,QueryTriggerInteraction.Ignore);
+        if(IsGrounded&&!wasGrounded&&verticalSpeed*gravity.y>0){
+            float impact=Mathf.Abs(verticalSpeed);
+            if(impact>6f)landDip=Mathf.Clamp(impact*.012f,0f,.22f);
+            if(Landed!=null)Landed(impact);
+        }
+        wasGrounded=IsGrounded;
         if(IsGrounded&&verticalSpeed*gravity.y>=0)verticalSpeed=gravity.y*2;
-        if(jump&&IsGrounded)verticalSpeed=-gravity.y*Mathf.Sqrt(2*gravityStrength*jumpHeight);
+        // Coyote time (jump just after leaving an edge) and jump buffering (press just before landing).
+        if(IsGrounded)lastGroundedTime=Time.time;
+        if(jump)jumpPressedTime=Time.time;
+        if(jumpPressedTime>0&&Time.time-jumpPressedTime<=jumpBuffer&&lastGroundedTime>0&&Time.time-lastGroundedTime<=coyoteTime){
+            verticalSpeed=-gravity.y*Mathf.Sqrt(2*gravityStrength*jumpHeight);
+            jumpPressedTime=-1;lastGroundedTime=-1;
+        }
         Vector3 desired=(transform.right*input.x*(IsInverted?-1:1)+transform.forward*input.y);
         desired=Vector3.ClampMagnitude(desired,1)*(Input.GetKey(KeyCode.LeftShift)?sprintSpeed:walkSpeed);
         planarVelocity=Vector3.Lerp(planarVelocity,desired,1-Mathf.Exp(-10*dt));
@@ -81,7 +109,14 @@ public class ArchiveGravityPlayer : MonoBehaviour
     {
         controller.enabled=false;transform.position=position;controller.enabled=true;
         IsInverted=inverted;verticalSpeed=0;planarVelocity=Vector3.zero;pitch=0;roll=inverted?180:0;
+        landDip=0;FovKick=0;jumpPressedTime=-1;lastGroundedTime=-1;wasGrounded=false;
         Physics.SyncTransforms();
+    }
+
+    public void Respawn(Vector3 position,bool inverted,float facingYaw)
+    {
+        yaw=facingYaw;transform.rotation=Quaternion.Euler(0,yaw,0);MovementLocked=false;
+        Respawn(position,inverted);
     }
 
     void OnDisable()

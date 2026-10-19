@@ -16,7 +16,7 @@ public class RuleCardPickup : MonoBehaviour
 
 void Update()
     {
-        if (nearby && !collected && Input.GetKeyDown(KeyCode.E)) TryCollect();
+        if (nearby && !collected && !MouseLook.isPaused && Input.GetKeyDown(KeyCode.E)) TryCollect();
     }
 
     public bool TryCollect()
