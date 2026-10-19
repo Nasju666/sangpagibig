@@ -1,0 +1,32 @@
+RULE CARDS - THE ARCHIVE
+
+THE TEAM
+  Kervie C. Roca ........ Project Manager
+  Junas Amanence ........ Programmer
+  Francis Nino Surban ... UI/UX & Graphic Design
+  John Lloyd Borces ..... Audio Design
+  John Kyle C. Sondo .... QA Testing & Documentation
+
+Built with Unity 2022 LTS (Universal Render Pipeline).
+
+3D MODELS
+  Generated with Hyper3D Rodin (Deemos) - https://hyper3d.ai
+
+TYPEFACES (SIL Open Font License 1.1 - see Licenses/)
+  Cinzel - Natanael Gama
+  Alegreya, Alegreya Sans SC - Juan Pablo del Peral / Huerta Tipografica
+
+MUSIC (Pixabay Content License)
+  Magic in the Air - Geoff Harvey (geoffharvey)
+  Short Chord Ambiance Loop - kuzu420
+  Song from Atlantis - Samuel F. Johanns (samuelfjohanns)
+
+SOUND EFFECTS
+  Impact Sounds - Kenney (CC0) - https://kenney.nl/assets/impact-sounds
+  Via Pixabay (Pixabay Content License):
+    arnav_geddada, litupsubway, pwlpl, soundreality, soundshelfstudio,
+    storegraphic, tanweraman, yodguard, freesound_community
+  All sounds were trimmed, filtered and re-encoded for the game.
+  Full per-file list: Assets/RuleCards/Art/AUDIO_CREDITS.txt (in the project).
+
+Thank you for playing.

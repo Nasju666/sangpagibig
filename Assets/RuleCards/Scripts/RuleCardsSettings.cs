@@ -52,6 +52,8 @@ public static class RuleCardsSettings
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Boot()
     {
+        // First launch of a build: pick a quality level the GPU can carry instead of always High Fidelity.
+        if (!Application.isEditor && !PlayerPrefs.HasKey(P + "Quality")) Set("Quality", AutoQuality());
         if (QualitySettings.GetQualityLevel() != Quality) QualitySettings.SetQualityLevel(Quality, true);
         ApplyFrameRate();
         AudioListener.volume = MasterVolume;
@@ -66,6 +68,16 @@ public static class RuleCardsSettings
         QualitySettings.vSyncCount = VSync ? 1 : 0;
         int cap = FrameCaps[FrameCapIndex];
         Application.targetFrameRate = VSync ? -1 : (cap == 0 ? -1 : cap);
+    }
+
+    /// <summary>Lowest level for cards with under 1.5 GB VRAM, middle under 3.5 GB, otherwise the project default.</summary>
+    public static int AutoQuality()
+    {
+        int levels = QualitySettings.names.Length, current = QualitySettings.GetQualityLevel();
+        int vram = SystemInfo.graphicsMemorySize;
+        if (vram > 0 && vram < 1500) return 0;
+        if (vram > 0 && vram < 3500) return Mathf.Min(current, Mathf.Max(0, levels / 2));
+        return current;
     }
 
     public static void ApplyQuality(int level)

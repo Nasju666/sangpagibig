@@ -217,6 +217,7 @@ public sealed class RuleCardsPostFX : MonoBehaviour
             {
                 var data = cam.GetUniversalAdditionalCameraData();
                 if (cam.targetTexture != null) continue; // portraits/minimaps stay clean
+                if (cam.cullingMask == 0) continue;      // player camera parked under a cutscene camera
                 if (data != null && !data.renderPostProcessing) data.renderPostProcessing = true;
             }
         }

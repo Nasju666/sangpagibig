@@ -18,6 +18,7 @@ public sealed class RuleCardsTitleMenu : MonoBehaviour
 
     private bool confirmNewGame;
     private bool settingsOpen;
+    private bool creditsOpen;
     private float shownAt;
     private bool backdrop;
 
@@ -52,7 +53,7 @@ public sealed class RuleCardsTitleMenu : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-        if (settingsOpen) return;
+        if (settingsOpen || creditsOpen || RuleCardsCredits.LastClosedFrame >= Time.frameCount - 1) return;
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
             if (RuleCardsProgress.HasAnyProgress) Continue();
@@ -151,6 +152,12 @@ public sealed class RuleCardsTitleMenu : MonoBehaviour
             ResponsiveIMGUI.End(previous);
             return;
         }
+        if (creditsOpen)
+        {
+            creditsOpen = RuleCardsCredits.Draw(vw, vh);
+            ResponsiveIMGUI.End(previous);
+            return;
+        }
 
         bool hasProgress = RuleCardsProgress.HasAnyProgress;
         float bw = Mathf.Min(300f, colW), bh = 40f;
@@ -179,10 +186,14 @@ public sealed class RuleCardsTitleMenu : MonoBehaviour
         }
         if (MenuItem(new Rect(x0 - 14f, by, bw, bh), "Settings", null, false)) { settingsOpen = true; confirmNewGame = false; }
         by += bh + 4f;
+        if (MenuItem(new Rect(x0 - 14f, by, bw, bh), "Credits", null, false)) { creditsOpen = true; confirmNewGame = false; }
+        by += bh + 4f;
         if (MenuItem(new Rect(x0 - 14f, by, bw, bh), "Quit", null, false)) Quit();
 
         GUI.Label(new Rect(x0, vh - 36f, vw - x0 * 2f, 20f), "WASD move   •   Mouse look   •   E interact   •   Esc pause",
             RuleCardsUI.Label(13, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, .9f), TextAnchor.MiddleLeft));
+        GUI.Label(new Rect(x0, vh - 36f, vw - x0 * 2f, 20f), "v" + Application.version,
+            RuleCardsUI.Label(13, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, .6f), TextAnchor.MiddleRight));
         ResponsiveIMGUI.End(previous);
     }
 

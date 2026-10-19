@@ -567,7 +567,7 @@ public sealed class RuleCardsStory : MonoBehaviour
             SceneManager.MoveGameObjectToScene(go, SceneManager.GetActiveScene());
             cutCam = go.AddComponent<Camera>();
         }
-        cutCam.CopyFrom(playerCam);
+        if (!playerMuted) cutCam.CopyFrom(playerCam);
         cutCam.targetTexture = null;
         cutCam.depth = playerCam.depth + 10f;
         var data = cutCam.GetUniversalAdditionalCameraData();
@@ -577,6 +577,7 @@ public sealed class RuleCardsStory : MonoBehaviour
             data.renderPostProcessing = true;
             if (source != null) { data.antialiasing = source.antialiasing; data.renderShadows = source.renderShadows; }
         }
+        MutePlayerCamera(true);
         camPos = fromPos = playerCam.transform.position;
         camRot = fromRot = playerCam.transform.rotation;
         shot = ShotKind.Player;
@@ -586,8 +587,33 @@ public sealed class RuleCardsStory : MonoBehaviour
         if (active != null && active.id == "intro") RuleCardsAudio.Play("stinger", .5f, 1f, 0f);
     }
 
+    private bool playerMuted, playerPost, playerShadows;
+    private int playerMask;
+
+    /// <summary>The cutscene camera covers the whole screen, so the player camera underneath stops drawing
+    /// geometry, shadows and post while it runs (it stays enabled, so Camera.main keeps working).
+    /// Without this every cutscene frame was rendered twice.</summary>
+    private void MutePlayerCamera(bool mute)
+    {
+        if (playerCam == null || mute == playerMuted) { if (!mute) playerMuted = false; return; }
+        var data = playerCam.GetUniversalAdditionalCameraData();
+        if (mute)
+        {
+            playerMask = playerCam.cullingMask;
+            playerCam.cullingMask = 0;
+            if (data != null) { playerPost = data.renderPostProcessing; playerShadows = data.renderShadows; data.renderPostProcessing = false; data.renderShadows = false; }
+        }
+        else
+        {
+            playerCam.cullingMask = playerMask;
+            if (data != null) { data.renderPostProcessing = playerPost; data.renderShadows = playerShadows; }
+        }
+        playerMuted = mute;
+    }
+
     private void DestroyCamera()
     {
+        MutePlayerCamera(false);
         if (cutCam != null) Destroy(cutCam.gameObject);
         cutCam = null;
         shot = ShotKind.Player;
@@ -600,6 +626,12 @@ public sealed class RuleCardsStory : MonoBehaviour
         fromPos = camPos;
         fromRot = camRot;
         shotTime = 0f;
+        if (kind == "player" || kind == "glyph")
+        {
+            // Coming back from a cut-away vantage: don't drag the camera through the wall in between.
+            Vector3 eye = playerCam.transform.position;
+            if ((camPos - eye).sqrMagnitude > .25f && Physics.Linecast(camPos, eye, ~0, QueryTriggerInteraction.Ignore)) fromPos = eye;
+        }
         if (kind == "player") { shot = ShotKind.Player; return; }
         if (kind == "glyph") { shot = GlyphGuide.Instance != null ? ShotKind.Glyph : ShotKind.Player; return; }
         Vector3 target;
@@ -613,7 +645,48 @@ public sealed class RuleCardsStory : MonoBehaviour
             Vector3 d = camPos - target;
             orbitStartAngle = Mathf.Atan2(d.z, d.x) * Mathf.Rad2Deg;
         }
-        else shot = ShotKind.Look;
+        else
+        {
+            shot = ShotKind.Look;
+            Vector3 eye = playerCam.transform.position;
+            lookEye = FindVantage(eye, target, UpVector());
+            if ((lookEye - eye).sqrMagnitude > .25f)
+            {
+                // The target is hidden from where the player stands (a pillar, a wall): hard-cut to a clear view.
+                fromPos = lookEye;
+                fromRot = Quaternion.LookRotation(target - lookEye, UpVector());
+            }
+        }
+    }
+
+    private Vector3 lookEye;
+
+    private static bool SightBlocked(Vector3 from, Vector3 to)
+    {
+        Vector3 d = to - from;
+        float len = d.magnitude;
+        if (len < 1.2f) return false;
+        return Physics.Raycast(from, d / len, len - 1f, ~0, QueryTriggerInteraction.Ignore);
+    }
+
+    /// <summary>The player's eye if it can see the target, otherwise the nearest clear spot 4-10 m from it.</summary>
+    private static Vector3 FindVantage(Vector3 eye, Vector3 target, Vector3 up)
+    {
+        if (!SightBlocked(eye, target)) return eye;
+        Vector3 side = Vector3.ProjectOnPlane(eye - target, up);
+        if (side.sqrMagnitude < .01f) side = Vector3.ProjectOnPlane(Vector3.forward, up);
+        side.Normalize();
+        Vector3 best = eye; float bestScore = float.MaxValue;
+        foreach (float dist in new[] { 6f, 8.5f, 4.5f })
+            for (int i = 0; i < 24; i++)
+            {
+                Vector3 dir = Quaternion.AngleAxis(i * 15f, up) * side;
+                Vector3 c = target + dir * dist + up * 1.2f;
+                if (Physics.CheckSphere(c, .35f, ~0, QueryTriggerInteraction.Ignore) || SightBlocked(c, target)) continue;
+                float score = (c - eye).sqrMagnitude + i * .5f;
+                if (score < bestScore) { bestScore = score; best = c; }
+            }
+        return best;
     }
 
     private static float ParseFloat(string s, float fallback)
@@ -673,11 +746,11 @@ public sealed class RuleCardsStory : MonoBehaviour
         {
             case ShotKind.Look:
             {
-                Vector3 to = shotTarget - eye;
+                Vector3 to = shotTarget - lookEye;
                 if (to.sqrMagnitude > .01f)
                 {
                     rot = Quaternion.LookRotation(to, up);
-                    pos = eye + to.normalized * Mathf.Min(.6f, shotTime * .12f); // slow push-in
+                    pos = lookEye + to.normalized * Mathf.Min(.6f, shotTime * .12f); // slow push-in
                 }
                 break;
             }
