@@ -22,6 +22,7 @@ public abstract class RepositoryNodePuzzle
 
     protected void Say(string text, bool error = false, float seconds = 2.2f)
     {
+        if (error) RuleCardsAudio.Ui(.35f, .6f);
         status = text;
         statusIsError = error;
         statusUntil = Time.unscaledTime + seconds;
@@ -67,7 +68,12 @@ public static class RepositoryGUI
         if (!styles.TryGetValue(key, out style) || style == null)
         {
             style = new GUIStyle(GUI.skin.label) { fontSize = size, alignment = anchor, wordWrap = true, richText = false };
-            style.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
+            // Themed fonts (Cinzel / Alegreya / Alegreya Sans SC); fall back to fake bold if they're missing.
+            style.font = RuleCardsUI.ForLegacy(size, bold);
+            // Small caps sit low (x-height caps), so the caps face reads a size smaller: nudge it up, with a floor.
+            if (style.font != null && (style.font == RuleCardsUI.Caps || style.font == RuleCardsUI.CapsBold))
+                style.fontSize = Mathf.Max(12, size + 1);
+            style.fontStyle = bold && style.font == null ? FontStyle.Bold : FontStyle.Normal;
             styles[key] = style;
         }
         style.normal.textColor = color;
@@ -207,6 +213,7 @@ public sealed class LinkMatrixPuzzle : RepositoryNodePuzzle
             if (end != drawing) { Say("Match the same colour.", true); return false; }
             path.Add(cell);
             drawing = -1;
+            RuleCardsAudio.Play("connected", .55f, 1f + .08f * end);
             if (IsComplete()) { Solved = true; Say("Kinetic lattice linked."); }
             return false;
         }
@@ -381,6 +388,7 @@ public sealed class GravityDriftPuzzle : RepositoryNodePuzzle
         core = blocks[0];
         ballast = blocks[1];
         flips++;
+        RuleCardsAudio.Play("whoosh", .4f, direction.y != 0 ? 1.5f : 1.7f);
         checkPending = true;
     }
 
@@ -570,6 +578,7 @@ public sealed class AirBridgePuzzle : RepositoryNodePuzzle
 
     private void SendPulse()
     {
+        RuleCardsAudio.Play("connected", .6f, .8f);
         for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) pulseDistance[x, y] = -1;
         var queue = new Queue<Vector2Int>();
         queue.Enqueue(source);
@@ -600,6 +609,7 @@ public sealed class AirBridgePuzzle : RepositoryNodePuzzle
         if (c != '.') return;
         if (!field[x, y] && FieldCount >= FieldBudget) { Say("Only three fields can hold. Reclaim one first.", true); return; }
         field[x, y] = !field[x, y];
+        if (field[x, y]) RuleCardsAudio.Play("connected", .35f, 1.15f); else RuleCardsAudio.Play("whoosh", .2f, 1.3f);
         showReach = false;
     }
 

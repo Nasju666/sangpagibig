@@ -11,6 +11,8 @@ public class ArchiveTransitSeal : MonoBehaviour
     public float crossingZ=19f;
     public bool IsLatched { get; private set; }
     public bool IsOccupied { get; private set; }
+    /// <summary>The core has opened this gate at least once (parked on the ceiling switch).</summary>
+    public bool WasPowered { get { return wasPowered; } }
     private Bounds passageBounds;
     private bool passageCached, hasPreviousPosition, sawEntrySide, wasPowered;
     private float previousPlayerZ, securedMessageUntil;
@@ -45,8 +47,11 @@ public void Evaluate(float dt)
 
         // Crossing the physical far edge is sufficient; the animation need not be 100% finished.
         // Remember prior switch power, so retrieving the core on this same frame cannot erase the crossing.
-        if (!IsLatched && wasPowered && sawEntrySide && crossedExit && withinPassage
-            && IsPassageClear(door, playerBounds))
+        // Also latch once the player simply stands beyond the gate after powering it: the strict
+        // crossing test missed players who went through on the ceiling (inverted), which left the
+        // gate unsecured, checkpoints frozen at 0 and the vault refusing to open.
+        bool beyondGate = sawEntrySide && currentZ >= exitZ;
+        if (!IsLatched && wasPowered && ((crossedExit && withinPassage && IsPassageClear(door, playerBounds)) || beyondGate))
         {
             IsLatched = true;
             securedMessageUntil = Time.unscaledTime + 6f;

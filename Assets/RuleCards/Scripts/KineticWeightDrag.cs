@@ -29,6 +29,8 @@ public class KineticWeightDrag : MonoBehaviour
         if(!dragging&&focused&&Input.GetMouseButtonDown(0))BeginDrag();
         if(!dragging)return;
         if(!Input.GetMouseButton(0)){Release();return;}
+        float speed=body.velocity.magnitude;
+        if(speed>.3f)RuleCardsAudio.LoopAt("weight_drag","drag_loop",Mathf.Min(.3f,.08f+speed*.05f),body.worldCenterOfMass,.75f);
         heldDistance=Mathf.Clamp(heldDistance+Input.mouseScrollDelta.y*scrollSpeed,2f,grabDistance);
         targetPosition=playerCamera.transform.position+playerCamera.transform.forward*heldDistance;
         targetPosition.y=Mathf.Clamp(targetPosition.y,minimumHeight,maximumHeight);
@@ -37,6 +39,7 @@ public class KineticWeightDrag : MonoBehaviour
     void BeginDrag()
     {
         dragging=true;
+        RuleCardsAudio.PlayAt("stone_push",body.worldCenterOfMass,.6f);
         heldDistance=Mathf.Clamp(Vector3.Distance(playerCamera.transform.position,body.worldCenterOfMass),2f,grabDistance);
         targetPosition=body.position; smoothVelocity=Vector3.zero;
         oldConstraints=body.constraints; oldGravity=body.useGravity;
@@ -67,7 +70,7 @@ public class KineticWeightDrag : MonoBehaviour
 
 void OnGUI()
     {
-        if(!focused && !dragging) return;
+        if((!focused && !dragging) || MouseLook.isPaused) return;
         float vw, vh;
         Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
         if(focused && !dragging)

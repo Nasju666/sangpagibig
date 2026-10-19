@@ -54,7 +54,7 @@ public sealed class RuleCardsSceneTransition : MonoBehaviour
         }
         elapsed = 0f;
         source.Stop();
-        source.Play();
+        if (!RuleCardsAudio.Has("portal")) source.Play(); // portals play their own sound now
     }
 
     private void Update()

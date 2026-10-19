@@ -13,6 +13,7 @@ public static class ResponsiveIMGUI
         virtualWidth = Screen.width / scale;
         virtualHeight = Screen.height / scale;
         GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        RuleCardsUI.ApplySkin();
         return previous;
     }
 

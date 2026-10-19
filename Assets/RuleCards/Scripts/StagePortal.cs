@@ -26,8 +26,8 @@ void Update()
         }
         if (nearby && !MouseLook.isPaused && Input.GetKeyDown(KeyCode.E))
         {
-            if (unlocked && !string.IsNullOrEmpty(destinationScene)) SceneManager.LoadScene(RuleCardsScenes.Resolve(destinationScene));
-            else message = "Required Rule Card missing: " + requiredCard;
+            if (unlocked && !string.IsNullOrEmpty(destinationScene)) { RuleCardsAudio.Play("portal", .9f); SceneManager.LoadScene(RuleCardsScenes.Resolve(destinationScene)); }
+            else { RuleCardsAudio.Play("deny", .5f); message = "Required Rule Card missing: " + requiredCard; }
         }
     }
 
@@ -35,7 +35,7 @@ void Update()
     void OnTriggerExit(Collider other) { if (other.GetComponent<CharacterController>() != null) { nearby = false; message = ""; } }
 void OnGUI()
     {
-        if (!nearby) return;
+        if (!nearby || MouseLook.isPaused) return;
         float vw, vh;
         Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
         string state = RuleCardsProgress.HasCard(requiredCard) ? "Press E to enter" : "LOCKED";

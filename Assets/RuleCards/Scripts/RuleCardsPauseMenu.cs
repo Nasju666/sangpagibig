@@ -51,6 +51,8 @@ public sealed class RuleCardsPauseMenu : MonoBehaviour
     private static RuleCardsPauseMenu instance;
     private bool paused;
     private bool confirmReset;
+    private bool settingsOpen;
+    private bool codexOpen;
     private float previousTimeScale = 1f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -84,6 +86,9 @@ public sealed class RuleCardsPauseMenu : MonoBehaviour
     {
         if (!RuleCardsScenes.IsGameplay(SceneManager.GetActiveScene().name)) { if (paused) ForceUnpaused(); return; }
         if (!Input.GetKeyDown(KeyCode.Escape)) return;
+        // The settings panel handles its own Esc (back to the pause menu); don't let that press resume too.
+        if (settingsOpen || Time.frameCount - RuleCardsSettingsMenu.LastClosedFrame <= 2) return;
+        if (codexOpen || Time.frameCount - RuleCardsCodex.LastClosedFrame <= 2) return;
         if (paused) Resume();
         else if (!ArchiveModal.IsOpen) Pause();
     }
@@ -102,6 +107,8 @@ public sealed class RuleCardsPauseMenu : MonoBehaviour
 
     private void Resume()
     {
+        settingsOpen = false;
+        codexOpen = false;
         paused = false;
         confirmReset = false;
         Time.timeScale = previousTimeScale;
@@ -113,6 +120,8 @@ public sealed class RuleCardsPauseMenu : MonoBehaviour
 
     private void ForceUnpaused()
     {
+        settingsOpen = false;
+        codexOpen = false;
         paused = false;
         confirmReset = false;
         Time.timeScale = 1f;
@@ -135,43 +144,64 @@ public sealed class RuleCardsPauseMenu : MonoBehaviour
         float vw, vh;
         Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
 
-        RepositoryGUI.Fill(new Rect(0f, 0f, vw, vh), new Color(0f, .01f, .02f, .78f));
+        if (settingsOpen)
+        {
+            settingsOpen = RuleCardsSettingsMenu.Draw(vw, vh);
+            if (Event.current != null && Event.current.isMouse) Event.current.Use();
+            ResponsiveIMGUI.End(previous);
+            GUI.depth = oldDepth;
+            return;
+        }
+
+        if (codexOpen)
+        {
+            codexOpen = RuleCardsCodex.Draw(vw, vh);
+            if (Event.current != null && Event.current.isMouse) Event.current.Use();
+            ResponsiveIMGUI.End(previous);
+            GUI.depth = oldDepth;
+            return;
+        }
+
+        RepositoryGUI.Fill(new Rect(0f, 0f, vw, vh), new Color(0f, .01f, .02f, .72f));
         string scene = SceneManager.GetActiveScene().name;
         bool inHub = scene == RuleCardsScenes.Hub;
-        int buttons = inHub ? 3 : 5;
-        float pw = Mathf.Min(380f, vw - 24f);
-        float ph = 128f + buttons * 48f + (confirmReset ? 26f : 0f);
+        int buttons = inHub ? 5 : 7;
+        const float bh = 40f, gap = 10f;
+        float pw = Mathf.Min(400f, vw - 24f);
+        float ph = 150f + buttons * (bh + gap) + (confirmReset ? 24f : 0f);
         Rect panel = new Rect((vw - pw) * .5f, (vh - ph) * .5f, pw, ph);
-        RepositoryGUI.Fill(panel, new Color(.03f, .05f, .09f, .97f));
-        RepositoryGUI.Frame(panel, new Color(.3f, 1f, 1f, .7f), 2f);
+        RuleCardsUI.Panel(panel);
 
-        GUI.Label(new Rect(panel.x, panel.y + 12f, pw, 32f), "PAUSED",
-            RepositoryGUI.Text(24, TextAnchor.MiddleCenter, new Color(.45f, 1f, 1f), true));
-        GUI.Label(new Rect(panel.x, panel.y + 44f, pw, 22f),
-            "Rule Cards " + RuleCardsProgress.CardsCollected + " / " + RuleCardsProgress.TotalCards
-            + (RuleCardsProgress.IsGameComplete ? "  •  Archive restored" : ""),
-            RepositoryGUI.Text(13, TextAnchor.MiddleCenter, new Color(1f, .85f, .45f)));
+        GUI.Label(new Rect(panel.x, panel.y + 22f, pw, 40f), "Paused", RuleCardsUI.Title(32, RuleCardsUI.Cyan));
+        RuleCardsUI.Divider(panel.center.x, panel.y + 70f, pw - 90f, RuleCardsUI.Gold);
+        string info = "Rule Cards  " + RuleCardsProgress.CardsCollected + " / " + RuleCardsProgress.TotalCards
+            + (RuleCardsProgress.IsGameComplete ? "   •   Archive restored" : "");
+        GUI.Label(new Rect(panel.x, panel.y + 80f, pw, 22f), info, RuleCardsUI.Label(14, RuleCardsUI.GoldBright, TextAnchor.MiddleCenter));
 
-        float bw = pw - 64f, bx = panel.x + 32f, y = panel.y + 78f;
-        if (GUI.Button(new Rect(bx, y, bw, 38f), "RESUME (Esc)")) Resume();
-        y += 48f;
+        float bw = pw - 80f, bx = panel.x + 40f, y = panel.y + 116f;
+        if (GUI.Button(new Rect(bx, y, bw, bh), "Resume   (Esc)", RuleCardsUI.PrimaryButton)) Resume();
+        y += bh + gap;
+        if (GUI.Button(new Rect(bx, y, bw, bh), "Settings")) { settingsOpen = true; confirmReset = false; }
+        y += bh + gap;
+        if (GUI.Button(new Rect(bx, y, bw, bh), "Index   ·   " + RuleCardsLore.FoundCount + " / " + RuleCardsLore.All.Count)) { codexOpen = true; confirmReset = false; }
+        y += bh + gap;
         if (!inHub)
         {
-            if (GUI.Button(new Rect(bx, y, bw, 38f), "RESTART STAGE")) Leave(scene);
-            y += 48f;
-            if (GUI.Button(new Rect(bx, y, bw, 38f), "RETURN TO THE ARCHIVE")) Leave(RuleCardsScenes.Hub);
-            y += 48f;
+            if (GUI.Button(new Rect(bx, y, bw, bh), "Restart Stage")) Leave(scene);
+            y += bh + gap;
+            if (GUI.Button(new Rect(bx, y, bw, bh), "Return to the Archive")) Leave(RuleCardsScenes.Hub);
+            y += bh + gap;
         }
-        if (GUI.Button(new Rect(bx, y, bw, 38f), "MAIN MENU")) Leave(RuleCardsScenes.Title);
-        y += 48f;
-        if (GUI.Button(new Rect(bx, y, bw, 38f), confirmReset ? "CLICK AGAIN TO ERASE" : "RESET ALL PROGRESS"))
+        if (GUI.Button(new Rect(bx, y, bw, bh), "Main Menu")) Leave(RuleCardsScenes.Title);
+        y += bh + gap;
+        if (GUI.Button(new Rect(bx, y, bw, bh), confirmReset ? "Click again to erase" : "Reset all progress"))
         {
             if (confirmReset) { RuleCardsProgress.ResetAll(); Leave(RuleCardsScenes.Title); }
             else confirmReset = true;
         }
         if (confirmReset)
-            GUI.Label(new Rect(panel.x + 8f, y + 42f, pw - 16f, 22f), "Erases every Rule Card, stage and best time.",
-                RepositoryGUI.Text(12, TextAnchor.MiddleCenter, new Color(1f, .5f, .4f)));
+            GUI.Label(new Rect(panel.x + 8f, y + bh + 4f, pw - 16f, 20f), "Erases every Rule Card, stage and best time.",
+                RuleCardsUI.ProseItalic(14, RuleCardsUI.Danger));
 
         // Swallow clicks so nothing underneath (consoles, drags) reacts while paused.
         if (Event.current != null && Event.current.isMouse) Event.current.Use();

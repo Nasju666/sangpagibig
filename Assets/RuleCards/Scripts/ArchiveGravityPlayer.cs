@@ -54,25 +54,30 @@ public class ArchiveGravityPlayer : MonoBehaviour
         if(MouseLook.isPaused||Time.timeScale==0)return;
         Cursor.lockState=CursorLockMode.Locked; Cursor.visible=false;
         float sign=IsInverted?-1:1;
-        yaw+=Input.GetAxis("Mouse X")*sensitivity*Time.deltaTime*sign;
-        pitch=Mathf.Clamp(pitch-Input.GetAxis("Mouse Y")*sensitivity*Time.deltaTime,-82,82);
+        // Mouse deltas are per-frame already: no deltaTime, so look speed no longer depends on frame rate.
+        float deg=RuleCardsSettings.LookDegreesPerUnit;
+        yaw+=Input.GetAxisRaw("Mouse X")*deg*sign;
+        pitch=Mathf.Clamp(pitch-Input.GetAxisRaw("Mouse Y")*deg*(RuleCardsSettings.InvertY?-1:1),-85,85);
         transform.rotation=Quaternion.Euler(0,yaw,0);
         if(!MovementLocked) SimulateMovement(new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical")),Input.GetKeyDown(KeyCode.Space),Time.deltaTime);
         roll=Mathf.MoveTowardsAngle(roll,IsInverted?180:0,360*Time.deltaTime);
         if(viewCamera!=null){
             landDip=Mathf.MoveTowards(landDip,0,Time.deltaTime*1.1f);
+            float motion=RuleCardsSettings.CameraMotion;
             FovKick=Mathf.MoveTowards(FovKick,0,Time.deltaTime*28);
-            viewCamera.transform.localPosition=Vector3.Lerp(viewCamera.transform.localPosition,new Vector3(0,sign*(.65f-landDip),0),14*Time.deltaTime);
+            viewCamera.transform.localPosition=Vector3.Lerp(viewCamera.transform.localPosition,new Vector3(0,sign*(.65f-landDip*motion),0),14*Time.deltaTime);
             float n=Time.time*26f;
-            Vector3 shake=new Vector3(Mathf.PerlinNoise(n,.3f)-.5f,Mathf.PerlinNoise(.7f,n)-.5f,(Mathf.PerlinNoise(n,n*.5f)-.5f)*.6f)*(Shake*2f);
+            Vector3 shake=new Vector3(Mathf.PerlinNoise(n,.3f)-.5f,Mathf.PerlinNoise(.7f,n)-.5f,(Mathf.PerlinNoise(n,n*.5f)-.5f)*.6f)*(Shake*2f*motion);
             viewCamera.transform.localRotation=Quaternion.Euler(0,0,roll)*Quaternion.Euler(pitch,0,0)*Quaternion.Euler(shake);
-            viewCamera.fieldOfView=Mathf.Lerp(viewCamera.fieldOfView,(Input.GetKey(KeyCode.LeftShift)?72:60)+FovKick,8*Time.deltaTime);
+            float baseFov=RuleCardsSettings.FieldOfView;
+            viewCamera.fieldOfView=Mathf.Lerp(viewCamera.fieldOfView,baseFov+(Input.GetKey(KeyCode.LeftShift)?10:0)+FovKick,1-Mathf.Exp(-8*Time.deltaTime));
         }
     }
 
     public void SetInverted(bool inverted)
     {
         if(IsInverted==inverted)return;
+        RuleCardsAudio.Play("whoosh",.75f,inverted?.92f:1.08f);
         IsInverted=inverted; verticalSpeed=0; IsGrounded=false; wasGrounded=false; lastGroundedTime=-1;
     }
 

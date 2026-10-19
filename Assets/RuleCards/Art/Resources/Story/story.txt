@@ -1,0 +1,219 @@
+# RuleCards story script. Edit freely; reloads on the next Play.
+#
+#   === id                 starts a sequence
+#   [cutscene]             letterbox + camera, pauses the run timer
+#   [dialogue]             dialogue box only, pauses the run timer
+#   [bark]                 small non-blocking line from Glyph (timer keeps running)
+#   [hint]                 one line per tier for the H key
+#   [shot look TARGET]     camera turns from your eyes to look at TARGET
+#   [shot orbit TARGET radius height]
+#   [shot glyph]           camera looks at Glyph in front of you
+#   [shot player]          back to your own view
+#   [glyph hide|appear|leave]
+#   [wait seconds]
+#   SPEAKER: text          GLYPH, ARCHIVE (the Archive's voice) or NARRATOR
+#
+# Targets: @portal:SceneName, @pickup, @return, @nodes, @finale, @exit, or a GameObject name.
+
+# ------------------------------------------------------------------ hub: new game
+=== intro
+[cutscene]
+[glyph hide]
+[shot look @portal:Stage_01_KineticLink]
+NARRATOR: The Archive keeps the rules the world runs on. How things move. Which way is down. What the air will hold.
+NARRATOR: Three of those rules have slipped out of the binding.
+[shot player]
+[wait 0.6]
+[glyph appear]
+[shot glyph]
+GLYPH: Oh! Oh, a Reader. A real one, with feet!
+GLYPH: I'm Glyph, the Archive's index. I know where everything is. Well. Where everything was.
+GLYPH: The Rule Cards came loose. Kinetic Link, Invert Gravity, Solidify Air. Without them the shelves forget how to stand.
+[shot look @portal:Stage_01_KineticLink]
+GLYPH: Each card fled into its own wing. That door is already awake. Kinetic Link, first.
+[shot glyph]
+GLYPH: WASD to walk, Space to jump, E to touch things. If you get stuck, press H and I'll think out loud for you.
+GLYPH: Go on. I'll float nearby. It's what I'm good at.
+
+# ------------------------------------------------------------------ hub returns
+=== hub_one_card
+[cutscene]
+[shot glyph]
+GLYPH: Hear that? The shelves stopped creaking. One rule back where it belongs.
+[shot look @portal:Stage_02_InvertGravity]
+GLYPH: The Gravity wing just opened. Up and down are... negotiable in there.
+
+=== hub_two_cards
+[cutscene]
+[shot glyph]
+GLYPH: I'm remembering things, Reader. There used to be Archivists. They wrote the rules.
+GLYPH: But a rule nobody reads is only ink. Someone had to read them so they'd be true.
+GLYPH: That's what a Reader is for. That's what you're for.
+[shot look @portal:Stage_03_SolidifyAir]
+GLYPH: Last wing. Solidify Air. Walk on what isn't there.
+
+=== hub_three_cards
+[cutscene]
+[shot look @portal:Repository_Final]
+GLYPH: All three. Now the Repository, where the rules are bound back into the book.
+[shot glyph]
+GLYPH: Three nodes, three cards. Wake them in order and the Archive will be whole.
+GLYPH: And then... no. Nothing. Let's go.
+
+=== hub_after_escape
+[dialogue]
+[glyph appear]
+GLYPH: You came back! Readers never come back.
+GLYPH: The door held. The Archive let you in as a guest this time. Stay as long as you like.
+GLYPH: And if you want to run it all again, faster... I'll be timing.
+
+# ------------------------------------------------------------------ stage entries
+=== enter_Stage_01_KineticLink
+[dialogue]
+GLYPH: The Kinetic wing. Everything here is linked to something else. Nothing moves alone.
+GLYPH: Find the rule diagram on the wall. Join the matching nodes and the weight will let go.
+
+=== enter_Stage_02_InvertGravity
+[dialogue]
+GLYPH: Hold on to something. Actually, don't. It won't help.
+GLYPH: Press E at an anchor to flip which way is down. Anything you're carrying comes with you.
+GLYPH: Hold left mouse to carry the core, scroll to push it further or pull it closer. R takes us back to the last checkpoint.
+GLYPH: The vault wants its core seated, and its three seals read in the right order. The walls will tell you how.
+
+=== enter_Stage_03_SolidifyAir
+[dialogue]
+GLYPH: Aim at the air and press E to make it solid. Only three fields hold at once. The air gets tired.
+GLYPH: Violet fields carry only you. Cyan ones with double stripes are reinforced, and those can carry the core.
+GLYPH: Space to jump the gaps. If it all goes wrong, R brings you and the core back to the last safe stone.
+
+=== enter_Repository_Final
+[dialogue]
+GLYPH: The heart of the Archive. Every rule ever written passed through this room.
+GLYPH: Node I first. The others will rise to meet you.
+
+# ------------------------------------------------------------------ cards
+=== card_KineticLink
+[dialogue]
+GLYPH: Kinetic Link! It's warm. Cards aren't supposed to be warm.
+GLYPH: One rule back. Take us home, the way out is open now.
+
+=== card_InvertGravity
+[dialogue]
+GLYPH: Invert Gravity. Down is down again. Mostly.
+GLYPH: Two. I'm starting to remember things. Not all of them good.
+
+=== card_SolidifyAir
+[dialogue]
+GLYPH: That's all three!
+GLYPH: Reader, before the Repository, there's something I should tell you. Later. I'll tell you later.
+
+# ------------------------------------------------------------------ repository
+=== node_I
+[bark]
+GLYPH: Lattice holding. Node II is rising, follow its light.
+
+=== node_II
+[bark]
+GLYPH: Gravity seated. One more node.
+
+=== repository_finale
+[cutscene]
+[shot orbit @finale 7 2.5]
+ARCHIVE: THE RULES ARE BOUND. THE BOOK IS COMPLETE.
+GLYPH: It's beautiful. Everything is exactly where it belongs.
+ARCHIVE: A COMPLETE BOOK HAS NO ROOM FOR A READER.
+[shot glyph]
+GLYPH: That's what I didn't tell you. When the Archive is whole, it closes. Everything inside gets written down. For good.
+GLYPH: Including you. So we're leaving. Now. Quickly. Bring the cards.
+
+# ------------------------------------------------------------------ escape
+=== enter_Stage_04_Escape
+[cutscene]
+[shot look @exit]
+ARCHIVE: UNWRITING.
+[shot glyph]
+GLYPH: It's erasing the way we came, and the floors go first!
+GLYPH: We run it backwards. Air, then Gravity, then Kinetic. 1, 2, 3 picks a card, right mouse uses it.
+GLYPH: Don't stop. Don't look at the red. Go!
+
+=== escape_zone_4
+[bark]
+GLYPH: Air! Place a field ahead of you. Look up to raise it.
+
+=== escape_zone_2
+[bark]
+GLYPH: Flip! The ceiling's still solid.
+
+=== escape_zone_1
+[bark]
+GLYPH: Pink anchors. Aim and pull!
+
+=== escape_zone_combo
+[bark]
+GLYPH: Everything at once now. You can do this.
+
+=== epilogue
+[cutscene]
+[shot glyph]
+GLYPH: The door's open. Go through.
+GLYPH: I can't come. I'm the index. I'm written into the binding, and if I let go, the door shuts on you.
+GLYPH: It's alright. Someone has to remember where everything is.
+GLYPH: Thank you for reading us, Reader.
+[glyph leave]
+[wait 2.2]
+NARRATOR: The Archive folded itself shut. Somewhere inside, a small light kept the place.
+
+# ------------------------------------------------------------------ hints (H)
+=== hint_ArchiveHub
+[hint]
+GLYPH: Open portals glow cyan. Locked ones stay dark until you hold the card they need.
+GLYPH: The wings go in order: Kinetic Link, then Invert Gravity, then Solidify Air, then the Repository.
+GLYPH: Walk up to the glowing portal and press E. I'll be right behind you.
+
+=== hint_Stage_01_KineticLink
+[hint]
+GLYPH: Find the Kinetic rule diagram on the wall and press E to open it.
+GLYPH: Each colour runs along a row and folds back into the next. Links can't cross, and every cell must be used.
+GLYPH: Pink takes the top row and folds into the second. Green finishes the second and takes the third. Cyan takes the fourth and folds into the fifth. Gold has the rest. Then hold left mouse to drag the weight onto the plate.
+
+=== hint_Stage_02_InvertGravity
+[hint]
+GLYPH: Stand at an anchor and press E to flip which way is down. Yes, you can walk on the ceiling.
+GLYPH: The core comes with you. Hold left mouse to drag it. The vault only opens with the core resting on its plate.
+GLYPH: Read the glyph clue near the vault and match it on the console. Lost? R puts you back at the last checkpoint.
+
+=== hint_Stage_03_SolidifyAir
+[hint]
+GLYPH: Aim at a field node and press E to solidify the air. Only three fields hold at once.
+GLYPH: Light fields carry you, not the core. Put the core on reinforced fields only.
+GLYPH: Reclaim the fields behind you with E so you can use them again. R recovers you and the core at the last checkpoint.
+
+=== hint_Repository_Final
+[hint]
+GLYPH: Walk to the glowing node and press E to open its console.
+GLYPH: Wake them in order, I, II, III. Each one rises when the one before it is solved.
+GLYPH: Press H while a console is open and I'll talk you through that node.
+
+=== hint_node_I
+[hint]
+GLYPH: Links can't cross and every cell must be used. Start with the pair that hugs the edge.
+GLYPH: Cyan goes the long way round, down the whole left edge. Gold snakes through the bottom right.
+GLYPH: Pink: down two, then right. Green: up one, right two, up into the corner. Cyan: left to the corner, down the left edge, one right. Gold: right two, up, left, up, right.
+
+=== hint_node_II
+[hint]
+GLYPH: The ballast is a tool. Use it as a wall for the core to stop against.
+GLYPH: Eight flips is enough. Start by pulling left, then up.
+GLYPH: Left, Up, Right, Down, Left, Down, Right, Up.
+
+=== hint_node_III
+[hint]
+GLYPH: Stone carries the pulse, so you only need fields where the stone breaks.
+GLYPH: One field next to the source starts the run. The relay and the vault each need one more.
+GLYPH: Solidify the third cell of the left column, the third cell of the right column, and the second cell of the bottom row.
+
+=== hint_Stage_04_Escape
+[hint]
+GLYPH: Keep moving. The collapse only catches you when you stop.
+GLYPH: 1, 2, 3 picks a card, right mouse uses it. Each card only works in its own section.
+GLYPH: Air: place a field ahead, look up to raise it. Gravity: flip while you're standing on something. Kinetic: aim at a pink anchor.

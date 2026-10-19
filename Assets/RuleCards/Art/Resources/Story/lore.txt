@@ -1,0 +1,85 @@
+# Lore fragments.  === id | Scene | Title   then the text (blank line = new paragraph).
+# Fragments are placed in front of the scene's shelves, in this order.
+
+=== hub_charter | ArchiveHub | The Charter of Rules
+Before the shelves, before the lamps, there were three sentences.
+
+A thing pushed will move what it is bound to. Down is where the world agrees to fall. Air is nothing, until it is asked to be something.
+
+The Archivists wrote them small, so they would fit in a hand, and called them Rule Cards.
+
+=== hub_readers | ArchiveHub | On Readers
+A rule unread is only ink. The Archivists wrote; the Readers read, and in the reading the rules became true.
+
+When the last Archivist set down her pen, the Archive kept one Reader's chair warm, just in case. It has been warm a long time.
+
+=== hub_index | ArchiveHub | Catalogue Note: Index Construct G
+One (1) index construct. Small, runic, chronically curious. Knows the location of every volume. Does not know why it was built with an eye.
+
+Has been reprimanded for reading during cataloguing. Has been reprimanded for humming. Do not let it near the Repository binding. It gets attached.
+
+=== kin_rule | Stage_01_KineticLink | First Rule: Kinetic Link
+Nothing in the Archive moves alone. Pull one book and its neighbours lean after it; lift a weight and somewhere a door remembers to rise.
+
+The Kinetic Link is the rule of consequence. Without it, pushing is only a wish.
+
+=== kin_log | Stage_01_KineticLink | Maintenance Log, Kinetic Wing
+Day 4 since the Unbinding. Counterweights stopped answering their levers.
+
+Day 6. The lattice diagrams on the walls are scrambling themselves. Colours cross where they never crossed.
+
+Day 9. We have stopped going in. Whoever reads this: the diagram still knows the answer. It only wants every line to have somewhere to go.
+
+=== kin_margin | Stage_01_KineticLink | Marginalia
+Scrawled in a tiny, careful hand:
+
+"If you hold the weight and walk, you are the link. Hello. This is Glyph. I am not supposed to write in the margins."
+
+=== grav_rule | Stage_02_InvertGravity | Second Rule: Invert Gravity
+Down is a promise the world makes to itself. In this wing the promise was written loosely, so it could be rewritten by anyone holding the card.
+
+The Archivists used it to shelve the ceilings. There are more books on the ceilings than you would think.
+
+=== grav_vault | Stage_02_InvertGravity | The Vault Glyphs
+The gravity vault answers to three marks, read in order, the way a sentence is.
+
+The Archivists hid the order nearby, so a Reader could find it and a thief could not. Thieves, it was assumed, do not read.
+
+=== grav_complaint | Stage_02_InvertGravity | A Complaint
+To the Office of Shelving.
+
+An entire row of atlases fell UP this morning. I request either a net or a different career.
+
+Archivist Orrin, Gravity Wing
+
+=== air_rule | Stage_03_SolidifyAir | Third Rule: Solidify Air
+Air is the patient rule. It holds nothing until a Reader insists, and then it holds just enough.
+
+Three fields at a time, never more. The air tires, and tired air drops what it carries.
+
+=== air_fields | Stage_03_SolidifyAir | On Reinforced Fields
+Light fields carry a person. A core weighs more than a person, the way a secret weighs more than a sentence.
+
+Reinforced fields are slower to raise and worth the wait. Many Archivists learned this from below.
+
+=== air_unbinding | Stage_03_SolidifyAir | The Unbinding
+No one tore the cards out. That is the part the Archivists never wrote down.
+
+The rules were read so many times by no one, for so long, that they wore thin and slipped from the binding, like pages from a book left open in the rain.
+
+=== rep_repository | Repository_Final | The Repository
+Every rule the Archive has ever held passed through this room to be bound. The nodes do not judge what is written; they only check that it fits.
+
+A complete book, the Archivists said, is a closed book. They meant it as a compliment.
+
+=== rep_archivist | Repository_Final | The Last Archivist
+She bound the final page herself and stepped out before the cover closed. Her note reads:
+
+"Leave the door to a Reader. Leave the remembering to the index. One of them must go and one must stay, or the Archive will forget it was ever read."
+
+=== rep_index | Repository_Final | Index Note, Unrequested
+I have catalogued everything in the Archive except one thing, which is what happens to me when it closes.
+
+I am choosing not to look it up. Some books are better read once.
+
+G.

@@ -1,0 +1,29 @@
+RuleCards audio sources (all trimmed/normalized/re-encoded to OGG for the game)
+
+Kenney "Impact Sounds" (CC0) - footsteps (step_0..4), jump, crumble_0..4
+  https://kenney.nl/assets/impact-sounds
+Pixabay (Pixabay Content License - free for games, no attribution required):
+  ui_click        arnav_geddada - ui sound 374228
+  step source alt freeeverythingxx - walking/running on concrete (not used)
+  portal          freesound_community - enter portal 47235
+  drag_loop       freesound_community - drag_1 43939
+  rumble_loop     freesound_community - earthquake loop 64704
+  land            freesound_community - land2 43790
+  glyph_appear    freesound_community - little robot sound 84657
+  respawn         freesound_community - revive 84898
+  stone_push      freesound_community - stone push 37412
+  page            litupsubway - paper grab 1 616938
+  heartbeat_loop  pwlpl - heartbeat tense 377250
+  whoosh          soundreality - whoosh 384629
+  solved          soundshelfstudio - success chime 513565
+  deny            soundshelfstudio - ui warning buzz 515667
+  stinger         storegraphic - deep long air transition 311830
+  archive_voice   tanweraman - dark rumble tension 370005
+  pickup          yodguard - item pickup 3 540193
+  creaks          kuzu420 - creaking bridge next to the river 574166
+  Music/title     geoffharvey - magic in the air 43177
+  Music/stages    kuzu420 - short chord ambiance loop 449557
+  Music/repository samuelfjohanns - song from atlantis 246382
+Renamed by Nasju (check original source/license): connected.mp3, escape track.mp3 (Music/escape),
+  leveltitlecredits.mp3 (Music/ending), Pressure plate click.mp3 (plate_click),
+  stone door open close.mp3 (door_grind_loop, door_stop)

@@ -76,5 +76,6 @@ public static class RuleCardsProgress
         PlayerPrefs.DeleteKey(BestEscapeKey);
         PlayerPrefs.Save();
         RuleCardsRunTimer.ResetRun();
+        RuleCardsStory.ResetAll();
     }
 }

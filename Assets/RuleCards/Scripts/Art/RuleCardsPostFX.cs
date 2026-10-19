@@ -54,6 +54,7 @@ public sealed class RuleCardsPostFX : MonoBehaviour
             instance.Build();
         }
         instance.gameObject.SetActive(true);
+        instance.currentScene = scene.name;
         instance.Apply(LookFor(scene.name), scene.name);
     }
 
@@ -105,11 +106,11 @@ public sealed class RuleCardsPostFX : MonoBehaviour
         var bloom = profile.Add<Bloom>(true);
         bloom.scatter.Override(.68f);
         bloom.highQualityFiltering.Override(true);
-        bloom.intensity.Override(l.bloom);
+        bloom.intensity.Override(l.bloom * RuleCardsSettings.Bloom);
         bloom.threshold.Override(l.threshold);
         bloom.tint.Override(l.bloomTint);
         var color = profile.Add<ColorAdjustments>(true);
-        color.postExposure.Override(l.exposure);
+        color.postExposure.Override(l.exposure + RuleCardsSettings.Brightness);
         color.contrast.Override(l.contrast);
         color.saturation.Override(l.saturation);
         color.colorFilter.Override(l.filter);
@@ -126,6 +127,19 @@ public sealed class RuleCardsPostFX : MonoBehaviour
         grain.response.Override(.85f);
         grain.intensity.Override(l.grain);
         return profile;
+    }
+
+    private string currentScene;
+
+    private void OnEnable() { RuleCardsSettings.Changed += Refresh; }
+    private void OnDisable() { RuleCardsSettings.Changed -= Refresh; }
+    /// <summary>Settings (brightness/bloom) changed: rebuild the profile for the current scene.</summary>
+    private void Refresh()
+    {
+        if (string.IsNullOrEmpty(currentScene) || volume == null) return;
+        if (profile != null) Destroy(profile);
+        profile = CreateProfile(currentScene);
+        volume.sharedProfile = profile;
     }
 
     private void Build()
@@ -202,6 +216,7 @@ public sealed class RuleCardsPostFX : MonoBehaviour
             foreach (Camera cam in Camera.allCameras)
             {
                 var data = cam.GetUniversalAdditionalCameraData();
+                if (cam.targetTexture != null) continue; // portraits/minimaps stay clean
                 if (data != null && !data.renderPostProcessing) data.renderPostProcessing = true;
             }
         }

@@ -28,7 +28,7 @@ public class ArchiveCalibrationPuzzle : MonoBehaviour
     void Start()
     {
         foreach (var item in rewardObjects ?? new GameObject[0])
-            if (item != null) item.SetActive(false);
+            RuleCardPickup.SetVaultOpen(item, false);
     }
 
     void Update()
@@ -113,12 +113,13 @@ public class ArchiveCalibrationPuzzle : MonoBehaviour
         }
         IsSolved = true;
         foreach (var item in sealedObjects ?? new GameObject[0]) if (item != null) item.SetActive(false);
-        foreach (var item in rewardObjects ?? new GameObject[0]) if (item != null) item.SetActive(true);
+        foreach (var item in rewardObjects ?? new GameObject[0]) RuleCardPickup.SetVaultOpen(item, true);
         Close();
     }
 
     void OnGUI()
     {
+        RuleCardsUI.ApplySkin();
         // Screen-space rectangles are shared by rendering and hit-testing. No GUI.matrix/input double scaling.
         Matrix4x4 savedMatrix = GUI.matrix;
         Color savedColor = GUI.color;

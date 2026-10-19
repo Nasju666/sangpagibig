@@ -71,7 +71,7 @@ public sealed class RuleCardCelebration : MonoBehaviour
         sound.spatialBlend = 0f; // Audible at any pickup/camera distance.
         sound.volume = 0.35f;
         sound.clip = chime;
-        sound.Play();
+        if (RuleCardsAudio.Play("pickup", 1f)) sound.enabled = false; else sound.Play();
     }
 
     private void CreateBurst(string objectName, bool confetti, int count)

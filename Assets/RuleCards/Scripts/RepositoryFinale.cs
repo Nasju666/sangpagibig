@@ -253,6 +253,8 @@ public sealed class RepositoryFinale : MonoBehaviour
     // ------------------------------------------------------------------ update
     private void Update()
     {
+        // H gives hints for the node whose console is open.
+        RuleCardsStory.HintContext = openNode != null ? "node_" + openNode.numeral : null;
         sceneTime += Time.deltaTime;
         if (player == null) player = FindObjectOfType<CharacterController>();
         AnimateNodes(Time.deltaTime);
@@ -339,7 +341,7 @@ public sealed class RepositoryFinale : MonoBehaviour
             if (solvedAt < 0f)
             {
                 solvedAt = Time.unscaledTime;
-                Play(chimeClip, .4f);
+                if (!RuleCardsAudio.Play("solved", .9f)) Play(chimeClip, .4f);
             }
             if (Time.unscaledTime - solvedAt > 1.5f)
             {
@@ -384,6 +386,7 @@ public sealed class RepositoryFinale : MonoBehaviour
         node.state = NodeState.Solved;
         for (int i = index; i < suspendedCards.Length; i += 3) Tint(CardMaterial(i), node.color, 2.2f);
         Banner("NODE " + node.numeral + " ALIGNED — " + node.rule);
+        RuleCardsStory.Bark("node_" + node.numeral);
 
         int next = index + 1;
         if (next < 3 && nodeData[next].state == NodeState.Hidden)
@@ -404,7 +407,7 @@ public sealed class RepositoryFinale : MonoBehaviour
         node.root.gameObject.SetActive(true);
         node.state = NodeState.Rising;
         node.rise = 0f;
-        Play(riseClip, .5f);
+        if (!RuleCardsAudio.Play("door_stop", .8f, .8f)) Play(riseClip, .5f);
         Banner("NODE " + node.numeral + " HAS RISEN — FOLLOW ITS LIGHT");
     }
 
@@ -468,8 +471,10 @@ public sealed class RepositoryFinale : MonoBehaviour
         finaleTime = 0f;
         clearTime = sceneTime;
         newBest = RuleCardsProgress.SubmitFinalTime(clearTime);
-        Play(finaleClip, .45f);
+        if (!RuleCardsAudio.Play("solved", .7f, .8f)) Play(finaleClip, .45f);
         Banner("THE REPOSITORY IS RESTORED", 5f);
+        RuleCardsStory.SetAnchor("finale", orbitCenter);
+        RuleCardsStory.Play("repository_finale", null, true, 1.2f);
 
         if (exitSeam != null)
         {
@@ -590,7 +595,7 @@ public sealed class RepositoryFinale : MonoBehaviour
         float vw, vh;
         Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
         int oldDepth = GUI.depth;
-        if (endingOpen) { GUI.depth = -100; DrawEnding(vw, vh); }
+        if (endingOpen) { RuleCardsRunHud.Suppress(); GUI.depth = -100; DrawEnding(vw, vh); }
         else if (openNode != null) { GUI.depth = -50; DrawConsole(vw, vh); }
         else if (!MouseLook.isPaused)
         {
@@ -604,25 +609,24 @@ public sealed class RepositoryFinale : MonoBehaviour
 
     private void DrawHud(float vw, float vh)
     {
-        Rect box = new Rect(12f, 12f, Mathf.Min(330f, vw - 24f), 112f);
-        RepositoryGUI.Fill(box, new Color(.01f, .03f, .05f, .72f));
-        RepositoryGUI.Fill(new Rect(box.x, box.y, 3f, box.height), new Color(.3f, 1f, 1f, .9f));
-        GUI.Label(new Rect(box.x + 12f, box.y + 6f, box.width - 16f, 22f), "THE FINAL REPOSITORY",
-            RepositoryGUI.Text(14, TextAnchor.MiddleLeft, new Color(.4f, 1f, 1f), true));
+        // Stacks under the run timer card (which already names the Repository).
+        Rect box = new Rect(RuleCardsRunHud.Margin, RuleCardsRunHud.NextY, Mathf.Min(300f, vw - 32f), 98f);
+        RuleCardsUI.HudCard(box);
         for (int i = 0; i < 3; i++)
         {
             Node node = nodeData[i];
-            string state = node.state == NodeState.Solved ? "ALIGNED" : node.state == NodeState.Hidden ? "SEALED" : "ACTIVE";
+            string state = node.state == NodeState.Solved ? "Aligned" : node.state == NodeState.Hidden ? "Sealed" : "Active";
             Color c = node.state == NodeState.Solved ? node.color
-                : node.state == NodeState.Hidden ? new Color(.5f, .55f, .6f) : Color.white;
-            GUI.Label(new Rect(box.x + 12f, box.y + 30f + i * 20f, box.width - 16f, 20f),
-                "Node " + node.numeral + " · " + node.rule + " — " + state, RepositoryGUI.Text(12, TextAnchor.MiddleLeft, c));
+                : node.state == NodeState.Hidden ? RuleCardsUI.Muted : RuleCardsUI.Text;
+            float ry = box.y + 8f + i * 20f;
+            GUI.Label(new Rect(box.x + 14f, ry, 150f, 20f), "Node " + node.numeral + "  ·  " + node.rule, RuleCardsUI.Label(13, c));
+            GUI.Label(new Rect(box.x + 14f, ry, box.width - 28f, 20f), state, RuleCardsUI.Label(12, c, TextAnchor.MiddleRight));
         }
         string objective = exitOpen ? "Leave through the open exit."
             : finaleRunning || finaleStartAt > 0f ? "The Repository is waking..."
             : "Align the active node.";
-        GUI.Label(new Rect(box.x + 12f, box.y + 90f, box.width - 16f, 20f), objective,
-            RepositoryGUI.Text(12, TextAnchor.MiddleLeft, new Color(1f, .85f, .45f)));
+        GUI.Label(new Rect(box.x + 14f, box.y + 70f, box.width - 28f, 20f), objective,
+            RuleCardsUI.ProseItalic(15, RuleCardsUI.GoldBright, TextAnchor.MiddleLeft));
     }
 
     private void DrawPrompt(float vw, float vh)

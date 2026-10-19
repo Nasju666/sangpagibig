@@ -101,6 +101,7 @@ public sealed class EscapeStage : MonoBehaviour
     private bool newBestRun;
     private int falls;
     private bool finished;
+    private bool awaitingEpilogue; // finished, but Glyph's farewell is still playing
     private float finishedAt;
     private bool newBest;
     private float respawnFlash;
@@ -113,6 +114,8 @@ public sealed class EscapeStage : MonoBehaviour
     // ------------------------------------------------------------------ setup
     private void Start()
     {
+        RuleCardsRunHud.StageTime = () => runTime;
+        RuleCardsStory.SetAnchor("exit", exitCenter);
         BuildRoute();
         player = FindObjectOfType<CharacterController>();
         if (player == null) { Debug.LogError("[RuleCards] Escape stage has no player."); enabled = false; return; }
@@ -218,7 +221,7 @@ public sealed class EscapeStage : MonoBehaviour
         }
 
         rumble = gameObject.AddComponent<AudioSource>();
-        rumble.clip = RumbleLoop();
+        rumble.clip = RuleCardsAudio.Has("rumble_loop") ? RuleCardsAudio.Clip("rumble_loop") : RumbleLoop();
         rumble.loop = true;
         rumble.spatialBlend = 0f;
         rumble.volume = 0f;
@@ -287,7 +290,8 @@ public sealed class EscapeStage : MonoBehaviour
     private void Update()
     {
         if (player == null) return;
-        if (finished) { ArchiveModal.MarkOpen(); UpdateEnding(); return; }
+        if (finished) { ArchiveModal.MarkOpen(); if (!awaitingEpilogue) UpdateEnding(); return; }
+        if (RuleCardsStory.Blocking) return; // cutscenes freeze the collapse and the escape clock
         float dt = Time.deltaTime;
         respawnFlash = Mathf.MoveTowards(respawnFlash, 0f, dt * 1.6f);
         runTime += dt;
@@ -304,6 +308,8 @@ public sealed class EscapeStage : MonoBehaviour
             {
                 zoneIntroduced.Add(zone);
                 Banner(zones[zone].label, zones[zone].hint, 6f);
+                int mask = zones[zone].cardMask;
+                if (mask > 0) RuleCardsStory.Bark(mask == 1 || mask == 2 || mask == 4 ? "escape_zone_" + mask : "escape_zone_combo");
             }
         }
 
@@ -365,7 +371,8 @@ public sealed class EscapeStage : MonoBehaviour
         wall.transform.SetPositionAndRotation(PointAt(wallS), Quaternion.LookRotation(dir, Vector3.up));
         float gap = Mathf.Max(0f, playerS - wallS);
         float danger = Mathf.Clamp01(1f - gap / 22f);
-        if (rumble != null) rumble.volume = .08f + .5f * danger;
+        if (rumble != null) rumble.volume = (.08f + .5f * danger) * RuleCardsSettings.SfxVolume;
+        RuleCardsAudio.LoopAt("heartbeat", "heartbeat_loop", danger * danger * .85f, null, .9f + .25f * danger);
         if (wallLight != null) wallLight.intensity = 2f + 3f * danger + Mathf.Sin(Time.time * 13f) * .6f;
     }
 
@@ -422,6 +429,11 @@ public sealed class EscapeStage : MonoBehaviour
         if (wall != null) wall.SetActive(false);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        // Glyph's farewell first (first escape only), then the results screen.
+        awaitingEpilogue = true;
+        if (rumble != null) rumble.Stop();
+        RuleCardsAudio.PlayMusic("ending", false);
+        RuleCardsStory.Play("epilogue", () => { awaitingEpilogue = false; finishedAt = Time.unscaledTime; }, true, .9f, true);
     }
 
     private void UpdateEnding()
@@ -493,7 +505,7 @@ public sealed class EscapeStage : MonoBehaviour
         float vw, vh;
         Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
         int oldDepth = GUI.depth;
-        if (finished) { GUI.depth = -100; DrawEnding(vw, vh); }
+        if (finished) { RuleCardsRunHud.Suppress(); if (!awaitingEpilogue) { GUI.depth = -100; DrawEnding(vw, vh); } }
         else if (!MouseLook.isPaused)
         {
             DrawDanger(vw, vh);
@@ -513,10 +525,13 @@ public sealed class EscapeStage : MonoBehaviour
         if (a <= .01f) return;
         Color c = new Color(.8f, .02f, .3f, a);
         float t = 60f;
-        RepositoryGUI.Fill(new Rect(0f, 0f, vw, t), c);
-        RepositoryGUI.Fill(new Rect(0f, vh - t, vw, t), c);
-        RepositoryGUI.Fill(new Rect(0f, t, t, vh - t * 2f), c);
-        RepositoryGUI.Fill(new Rect(vw - t, t, t, vh - t * 2f), c);
+        // Soft red edge glow that fades inward (was four hard bars).
+        t = 90f;
+        Color clear = new Color(c.r, c.g, c.b, 0f);
+        RuleCardsUI.Gradient(new Rect(0f, 0f, vw, t), c, clear);
+        RuleCardsUI.Gradient(new Rect(0f, vh - t, vw, t), clear, c);
+        RuleCardsUI.Gradient(new Rect(0f, 0f, t, vh), c, clear, 0, true);
+        RuleCardsUI.Gradient(new Rect(vw - t, 0f, t, vh), clear, c, 0, true);
         if (respawnFlash > 0f) RepositoryGUI.Fill(new Rect(0f, 0f, vw, vh), new Color(0f, 0f, 0f, Mathf.Clamp01(respawnFlash * 1.4f)));
     }
 
@@ -525,20 +540,17 @@ public sealed class EscapeStage : MonoBehaviour
         // crosshair
         RepositoryGUI.Fill(new Rect(vw * .5f - 2f, vh * .5f - 2f, 4f, 4f), new Color(1f, 1f, 1f, .8f));
 
-        Rect box = new Rect(12f, 12f, Mathf.Min(300f, vw - 24f), 80f);
-        RepositoryGUI.Fill(box, new Color(.01f, .03f, .05f, .7f));
-        RepositoryGUI.Fill(new Rect(box.x, box.y, 3f, box.height), new Color(1f, .2f, .5f, .9f));
-        GUI.Label(new Rect(box.x + 12f, box.y + 6f, box.width - 16f, 22f), "THE UNWRITTEN ARCHIVE",
-            RepositoryGUI.Text(14, TextAnchor.MiddleLeft, new Color(1f, .45f, .7f), true));
-        int s = Mathf.FloorToInt(runTime);
-        GUI.Label(new Rect(box.x + 12f, box.y + 30f, box.width - 16f, 20f),
-            "Time " + (s / 60) + ":" + (s % 60).ToString("00") + "   •   Falls " + falls,
-            RepositoryGUI.Text(12, TextAnchor.MiddleLeft, Color.white));
+        // Run timer card (stage + total) is drawn by RuleCardsRunHud; this card stacks under it.
+        Rect box = new Rect(RuleCardsRunHud.Margin, RuleCardsRunHud.NextY, Mathf.Min(300f, vw - 32f), 46f);
+        RuleCardsUI.HudCard(box);
+        GUI.Label(new Rect(box.x + 14f, box.y + 6f, 40f, 18f), "Falls", RuleCardsUI.Label(12, RuleCardsUI.Muted));
+        GUI.Label(new Rect(box.x + 56f, box.y + 6f, 60f, 18f), falls.ToString(), RuleCardsUI.Number(15, RuleCardsUI.Text, TextAnchor.MiddleLeft));
+        GUI.Label(new Rect(box.x + 120f, box.y + 6f, box.width - 134f, 18f), "Collapse", RuleCardsUI.Label(12, RuleCardsUI.Muted, TextAnchor.MiddleRight));
         float progress = routeLength > 0f ? Mathf.Clamp01(playerS / routeLength) : 0f;
-        Rect bar = new Rect(box.x + 12f, box.y + 56f, box.width - 24f, 8f);
-        RepositoryGUI.Fill(bar, new Color(1f, 1f, 1f, .15f));
-        RepositoryGUI.Fill(new Rect(bar.x, bar.y, bar.width * Mathf.Clamp01(wallS / Mathf.Max(1f, routeLength)), bar.height), new Color(.9f, .1f, .4f, .9f));
-        RepositoryGUI.Fill(new Rect(bar.x + bar.width * progress - 2f, bar.y - 3f, 4f, bar.height + 6f), new Color(.4f, 1f, 1f, 1f));
+        Rect bar = new Rect(box.x + 14f, box.y + 30f, box.width - 28f, 4f);
+        RepositoryGUI.Fill(bar, new Color(1f, 1f, 1f, .12f));
+        RepositoryGUI.Fill(new Rect(bar.x, bar.y, bar.width * Mathf.Clamp01(wallS / Mathf.Max(1f, routeLength)), bar.height), new Color(.85f, .25f, .4f, .85f));
+        RepositoryGUI.Fill(new Rect(bar.x + bar.width * progress - 1.5f, bar.y - 3f, 3f, bar.height + 6f), RuleCardsUI.GoldBright);
 
         if (Time.unscaledTime < noticeUntil && !string.IsNullOrEmpty(notice))
         {
@@ -595,32 +607,48 @@ public sealed class EscapeStage : MonoBehaviour
         RepositoryGUI.Fill(new Rect(0f, 0f, vw, vh), new Color(.005f, .015f, .025f, .97f * fade));
         float a = Mathf.Clamp01((t - .8f) / .8f);
         if (a <= 0f) return;
-        float w = Mathf.Min(700f, vw - 32f), x = (vw - w) * .5f, y = vh * .2f;
-        GUI.Label(new Rect(x, y, w, 50f), "YOU ESCAPED THE ARCHIVE",
-            RepositoryGUI.Text(Mathf.Clamp(Mathf.RoundToInt(vw / 26f), 22, 34), TextAnchor.MiddleCenter, new Color(.45f, 1f, 1f, a), true));
+        float w = Mathf.Min(760f, vw - 32f), x = (vw - w) * .5f, y = Mathf.Max(24f, vh * .14f), cx = vw * .5f;
+        GUI.Label(new Rect(x, y, w, 20f), "T H E   U N W R I T T E N   A R C H I V E", RuleCardsUI.Label(14, RepositoryGUI.WithAlpha(RuleCardsUI.Gold, a), TextAnchor.MiddleCenter));
+        GUI.Label(new Rect(x - 40f, y + 20f, w + 80f, 64f), "You Escaped the Archive",
+            RuleCardsUI.Title(Mathf.RoundToInt(Mathf.Clamp(vw / 22f, 30f, 48f)), RepositoryGUI.WithAlpha(RuleCardsUI.Cyan, a)));
+        RuleCardsUI.Divider(cx, y + 94f, Mathf.Min(420f, w), RuleCardsUI.Gold, a);
         for (int i = 0; i < 3; i++)
-            RepositoryGUI.Fill(new Rect(vw * .5f - 75f + i * 52f, y + 60f, 46f, 4f), RepositoryGUI.WithAlpha(RuleCardInfo.Colors[i], a));
-        GUI.Label(new Rect(x, y + 80f, w, 70f),
+            RuleCardsUI.Diamond(new Vector2(cx - 26f + i * 26f, y + 112f), 9f, RuleCardInfo.Colors[i], a);
+        GUI.Label(new Rect(x + 40f, y + 128f, w - 80f, 56f),
             "The Archive folded itself shut behind you. The three Rule Cards are still warm in your hand.",
-            RepositoryGUI.Text(15, TextAnchor.UpperCenter, new Color(.85f, .9f, 1f, a)));
-        int s = Mathf.RoundToInt(runTime);
-        float best = RuleCardsProgress.BestEscapeTime;
-        int b = Mathf.RoundToInt(best);
-        string stats = "Escape time " + (s / 60) + ":" + (s % 60).ToString("00") + "   •   Falls " + falls
-            + (best > 0f ? "   •   Best " + (b / 60) + ":" + (b % 60).ToString("00") + (newBest ? " (NEW)" : "") : "");
-        GUI.Label(new Rect(x, y + 150f, w, 26f), stats, RepositoryGUI.Text(14, TextAnchor.MiddleCenter, new Color(1f, .85f, .45f, a)));
+            RuleCardsUI.ProseItalic(19, new Color(.86f, .9f, 1f, a), TextAnchor.UpperCenter));
 
-        // Whole game: every stage, the Repository, the escape and time in the hub.
-        float bestRun = RuleCardsRunTimer.BestRun;
-        string run = "FULL RUN " + RuleCardsRunTimer.Format(RuleCardsRunTimer.Total)
-            + (RuleCardsRunTimer.Partial ? "  (started mid-save — earlier stages not timed)"
-               : bestRun > 0f ? "   •   Best run " + RuleCardsRunTimer.Format(bestRun) + (newBestRun ? " (NEW)" : "") : "");
-        GUI.Label(new Rect(x, y + 182f, w, 30f), run, RepositoryGUI.Text(20, TextAnchor.MiddleCenter, new Color(.45f, 1f, 1f, a), true));
-        GUI.Label(new Rect(x, y + 214f, w, 22f), RuleCardsRunTimer.SplitLine(), RepositoryGUI.Text(12, TextAnchor.MiddleCenter, new Color(.8f, .88f, 1f, .85f * a)));
+        // Stat strip: this escape, falls, best escape, whole run.
+        float best = RuleCardsProgress.BestEscapeTime, bestRun = RuleCardsRunTimer.BestRun;
+        Rect strip = new Rect(x, y + 190f, w, 92f);
+        RuleCardsUI.Panel(strip, a * .9f);
+        float colW = strip.width / 4f;
+        StatCell(new Rect(strip.x + colW * 0f, strip.y + 14f, colW, 64f), "Escape time", RuleCardsRunTimer.Format(runTime), null, RuleCardsUI.Text, a);
+        StatCell(new Rect(strip.x + colW * 1f, strip.y + 14f, colW, 64f), "Falls", falls.ToString(), null, RuleCardsUI.Text, a);
+        StatCell(new Rect(strip.x + colW * 2f, strip.y + 14f, colW, 64f), "Best escape", best > 0f ? RuleCardsRunTimer.Format(best) : "—",
+            newBest ? "New best" : null, RuleCardsUI.GoldBright, a);
+        StatCell(new Rect(strip.x + colW * 3f, strip.y + 14f, colW, 64f), "Full run", RuleCardsRunTimer.Format(RuleCardsRunTimer.Total),
+            RuleCardsRunTimer.Partial ? "Partial" : newBestRun ? "New best" : bestRun > 0f ? "Best " + RuleCardsRunTimer.Format(bestRun) : null, RuleCardsUI.Cyan, a);
+        for (int i = 1; i < 4; i++) RepositoryGUI.Fill(new Rect(strip.x + colW * i, strip.y + 18f, 1f, strip.height - 36f), new Color(1f, 1f, 1f, .08f * a));
+
+        string splits = RuleCardsRunTimer.SplitLine();
+        GUI.Label(new Rect(x, strip.yMax + 10f, w, 20f), splits, RuleCardsUI.Label(14, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, a), TextAnchor.MiddleCenter));
+        if (RuleCardsRunTimer.Partial)
+            GUI.Label(new Rect(x, strip.yMax + 30f, w, 20f), "This run started mid-save, so earlier stages weren't timed. Start a New Game for a full time.",
+                RuleCardsUI.ProseItalic(14, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, a)));
+
         if (t < 2.4f) return;
-        float bw = Mathf.Min(260f, (w - 24f) * .5f), by = Mathf.Min(y + 262f, vh - 90f);
-        if (GUI.Button(new Rect(vw * .5f - bw - 8f, by, bw, 42f), "RETURN TO THE ARCHIVE (E)")) RuleCardsScenes.Load(RuleCardsScenes.Hub);
-        if (GUI.Button(new Rect(vw * .5f + 8f, by, bw, 42f), "MAIN MENU")) RuleCardsScenes.Load(RuleCardsScenes.Title);
+        float bw = Mathf.Min(280f, (w - 24f) * .5f), by = Mathf.Min(strip.yMax + 64f, vh - 70f);
+        if (GUI.Button(new Rect(cx - bw - 8f, by, bw, 44f), "Return to the Archive   (E)", RuleCardsUI.PrimaryButton)) RuleCardsScenes.Load(RuleCardsScenes.Hub);
+        if (GUI.Button(new Rect(cx + 8f, by, bw, 44f), "Main Menu")) RuleCardsScenes.Load(RuleCardsScenes.Title);
+    }
+
+    private static void StatCell(Rect r, string label, string value, string tag, Color valueColor, float a)
+    {
+        GUI.Label(new Rect(r.x, r.y, r.width, 16f), label, RuleCardsUI.Label(13, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, a), TextAnchor.MiddleCenter));
+        GUI.Label(new Rect(r.x, r.y + 16f, r.width, 32f), value, RuleCardsUI.Number(26, RepositoryGUI.WithAlpha(valueColor, a)));
+        if (!string.IsNullOrEmpty(tag))
+            GUI.Label(new Rect(r.x, r.y + 48f, r.width, 16f), tag, RuleCardsUI.Label(12, RepositoryGUI.WithAlpha(tag == "New best" ? RuleCardsUI.GoldBright : RuleCardsUI.Muted, a), TextAnchor.MiddleCenter));
     }
 
     // ------------------------------------------------------------------ helpers
@@ -665,6 +693,7 @@ public sealed class EscapeStage : MonoBehaviour
 
     private void OnDestroy()
     {
+        RuleCardsRunHud.StageTime = null;
         if (wallMaterial != null) Destroy(wallMaterial);
         if (motor != null) motor.Landed -= OnLanded;
         if (motes != null) Destroy(motes.gameObject);

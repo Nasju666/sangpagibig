@@ -62,6 +62,15 @@ public sealed class DecorMotion : MonoBehaviour
 
         if (pulseAmount > 0f)
         {
+            // Lazily (re)build caches: they are lost if scripts recompile during Play.
+            if (block == null) block = new MaterialPropertyBlock();
+            if (renderers == null) renderers = GetComponentsInChildren<Renderer>();
+            if (lights == null || lightBase == null || lightBase.Length != lights.Length)
+            {
+                lights = GetComponentsInChildren<Light>();
+                lightBase = new float[lights.Length];
+                for (int i = 0; i < lights.Length; i++) lightBase[i] = lights[i].intensity;
+            }
             float k = 1f + Mathf.Sin(t * pulseSpeed + phase) * pulseAmount;
             foreach (Renderer r in renderers)
             {

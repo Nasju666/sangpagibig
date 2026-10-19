@@ -125,7 +125,7 @@ public sealed class RuleCardsRunTimer : MonoBehaviour
     private void Update()
     {
         string scene = SceneManager.GetActiveScene().name;
-        if (!RuleCardsScenes.IsGameplay(scene) || Finished || MouseLook.isPaused || Time.timeScale <= 0f) return;
+        if (!RuleCardsScenes.IsGameplay(scene) || Finished || MouseLook.isPaused || RuleCardsStory.Blocking || Time.timeScale <= 0f) return;
         if (PlayerPrefs.GetInt(StartedKey, 0) == 0)
         {
             // First run on this save since the timer existed: earlier stages weren't timed.

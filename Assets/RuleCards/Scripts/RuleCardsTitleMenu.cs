@@ -17,6 +17,7 @@ public sealed class RuleCardsTitleMenu : MonoBehaviour
     };
 
     private bool confirmNewGame;
+    private bool settingsOpen;
     private float shownAt;
     private bool backdrop;
 
@@ -51,6 +52,7 @@ public sealed class RuleCardsTitleMenu : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        if (settingsOpen) return;
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
             if (RuleCardsProgress.HasAnyProgress) Continue();
@@ -83,81 +85,153 @@ public sealed class RuleCardsTitleMenu : MonoBehaviour
         float t = Time.unscaledTime;
         float intro = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - shownAt) / 1.2f));
 
-        float w = Mathf.Min(560f, vw - 32f);
-        float x = (vw - w) * .5f;
-        float y = vh * .16f;
+        // Left-hand column over the 3D diorama (the ring and the giant card stay visible on the right).
+        float x0 = Mathf.Clamp(vw * .065f, 28f, 90f);
+        float colW = Mathf.Min(440f, vw - x0 * 2f);
         if (backdrop)
         {
-            // The 3D archive diorama shows through: fade in from black, keep a soft panel behind the text.
-            RepositoryGUI.Fill(new Rect(0f, 0f, vw, vh), new Color(.008f, .022f, .035f, Mathf.Lerp(1f, .18f, intro)));
-            RepositoryGUI.Fill(new Rect(x - 28f, y - 24f, w + 56f, vh - y - 24f), new Color(.006f, .016f, .028f, .55f * intro));
+            RepositoryGUI.Fill(new Rect(0f, 0f, vw, vh), new Color(.008f, .022f, .035f, Mathf.Lerp(1f, .1f, intro)));
+            float fadeW = Mathf.Min(vw, x0 + colW + 260f);
+            RuleCardsUI.Gradient(new Rect(0f, 0f, fadeW, vh), new Color(.01f, .02f, .035f, .9f * intro), new Color(.01f, .02f, .035f, 0f), 32, true);
         }
         else
         {
             RepositoryGUI.Fill(new Rect(0f, 0f, vw, vh), new Color(.008f, .022f, .035f, 1f));
             DrawDriftingCards(vw, vh, t, intro);
         }
-        GUI.Label(new Rect(x, y, w, 64f), gameTitle,
-            RepositoryGUI.Text(Mathf.Clamp(Mathf.RoundToInt(vw / 18f), 30, 52), TextAnchor.MiddleCenter, new Color(.45f, 1f, 1f, intro), true));
-        GUI.Label(new Rect(x, y + 62f, w, 26f), subtitle,
-            RepositoryGUI.Text(16, TextAnchor.MiddleCenter, new Color(.8f, .9f, 1f, .8f * intro)));
 
-        // Rule chips: filled once the card is collected.
-        float chipW = Mathf.Min(150f, (w - 24f) / 3f), chipY = y + 104f;
-        float chipX = vw * .5f - (chipW * 3f + 24f) * .5f;
-        for (int i = 0; i < 3; i++)
-        {
-            Rect chip = new Rect(chipX + i * (chipW + 12f), chipY, chipW, 30f);
-            bool has = RuleCardsProgress.HasCard(RuleIds[i]);
-            if (has) RepositoryGUI.Fill(chip, RepositoryGUI.WithAlpha(RuleColors[i], .85f * intro));
-            RepositoryGUI.Frame(chip, RepositoryGUI.WithAlpha(RuleColors[i], intro), 2f);
-            GUI.Label(chip, RuleNames[i], RepositoryGUI.Text(12, TextAnchor.MiddleCenter,
-                has ? new Color(.03f, .03f, .06f, intro) : RepositoryGUI.WithAlpha(RuleColors[i], .8f * intro), true));
-        }
+        float y = Mathf.Max(28f, vh * .12f);
+        GUI.Label(new Rect(x0 + 2f, y, colW, 22f), Spaced(subtitle), RuleCardsUI.Label(15, RepositoryGUI.WithAlpha(RuleCardsUI.Gold, intro)));
+        y += 22f;
+        int titleSize = Mathf.RoundToInt(Mathf.Clamp(vh / 8.5f, 52f, 92f));
+        GUI.Label(new Rect(x0 - 2f, y, colW + 200f, titleSize * 1.25f), gameTitle,
+            RuleCardsUI.Title(titleSize, RepositoryGUI.WithAlpha(RuleCardsUI.Cyan, intro), TextAnchor.MiddleLeft));
+        y += titleSize * 1.25f + 6f;
+        LeftRule(x0, y, colW * .8f, intro);
+        y += 18f;
+
+        y += 8f;
 
         string status;
-        if (RuleCardsProgress.IsGameComplete)
-        {
-            status = "YOU ESCAPED THE ARCHIVE";
-            float best = RuleCardsProgress.BestEscapeTime;
-            if (best > 0f) status += "  •  Best escape " + (Mathf.RoundToInt(best) / 60) + ":" + (Mathf.RoundToInt(best) % 60).ToString("00");
-        }
-        else if (RuleCardsProgress.IsRepositoryComplete)
-            status = "The Repository is restored. The escape remains.";
-        else if (RuleCardsProgress.HasAnyProgress)
-            status = "Rule Cards recovered: " + RuleCardsProgress.CardsCollected + " / " + RuleCardsProgress.TotalCards;
+        if (RuleCardsProgress.IsGameComplete) status = "You escaped the Archive.";
+        else if (RuleCardsProgress.IsRepositoryComplete) status = "The Repository is restored. The escape remains.";
+        else if (RuleCardsProgress.HasAnyProgress) status = RuleCardsProgress.CardsCollected + " of " + RuleCardsProgress.TotalCards + " Rule Cards recovered.";
         else status = "The Archive is waiting.";
-        GUI.Label(new Rect(x, chipY + 40f, w, 24f), status,
-            RepositoryGUI.Text(14, TextAnchor.MiddleCenter, new Color(1f, .85f, .45f, intro)));
+        GUI.Label(new Rect(x0, y, colW, 26f), status, RuleCardsUI.ProseItalic(19, RepositoryGUI.WithAlpha(RuleCardsUI.GoldBright, intro), TextAnchor.MiddleLeft));
+        y += 30f;
+
+        // Run time across every stage (live total while a run is going, final total once escaped), plus bests.
+        float bestEscape = RuleCardsProgress.BestEscapeTime, bestRun = RuleCardsRunTimer.BestRun, total = RuleCardsRunTimer.Total;
+        if (total >= 1f || bestEscape > 0f || bestRun > 0f)
+        {
+            float sx = x0;
+            if (total >= 1f)
+            {
+                string label = RuleCardsRunTimer.Finished ? "Total time" : "Run so far";
+                if (RuleCardsRunTimer.Partial) label += " *";
+                StatLeft(new Rect(sx, y, 140f, 46f), label, RuleCardsRunTimer.Format(total), intro);
+                sx += 150f;
+            }
+            if (bestEscape > 0f) { StatLeft(new Rect(sx, y, 140f, 46f), "Best escape", RuleCardsRunTimer.Format(bestEscape), intro); sx += 150f; }
+            if (bestRun > 0f) StatLeft(new Rect(sx, y, 140f, 46f), "Best full run", RuleCardsRunTimer.Format(bestRun), intro);
+            y += 54f;
+            if (RuleCardsRunTimer.Partial && total >= 1f)
+            {
+                GUI.Label(new Rect(x0, y - 4f, colW, 18f), "* Started on an older save, so early stages weren't timed.",
+                    RuleCardsUI.ProseItalic(13, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, intro), TextAnchor.MiddleLeft));
+                y += 18f;
+            }
+        }
+        y += 8f;
 
         if (intro < .6f) { ResponsiveIMGUI.End(previous); return; }
+        if (settingsOpen)
+        {
+            settingsOpen = RuleCardsSettingsMenu.Draw(vw, vh);
+            ResponsiveIMGUI.End(previous);
+            return;
+        }
 
         bool hasProgress = RuleCardsProgress.HasAnyProgress;
-        float bw = Mathf.Min(300f, w), bx = vw * .5f - bw * .5f, by = Mathf.Max(chipY + 84f, vh * .5f);
+        float bw = Mathf.Min(300f, colW), bh = 40f;
+        float by = Mathf.Max(y, vh * .56f);
         if (hasProgress)
         {
-            if (GUI.Button(new Rect(bx, by, bw, 44f), "CONTINUE (Enter)")) Continue();
-            by += 54f;
-            if (GUI.Button(new Rect(bx, by, bw, 44f), confirmNewGame ? "CLICK AGAIN — ERASE AND START OVER" : "NEW GAME"))
+            if (MenuItem(new Rect(x0 - 14f, by, bw, bh), "Continue", "Enter", true)) Continue();
+            by += bh + 4f;
+            if (MenuItem(new Rect(x0 - 14f, by, bw, bh), confirmNewGame ? "Erase everything?" : "New Game", confirmNewGame ? "Click again" : null, false, confirmNewGame))
             {
                 if (confirmNewGame) NewGame();
                 else confirmNewGame = true;
             }
+            by += bh + 4f;
             if (confirmNewGame)
-                GUI.Label(new Rect(x, by + 46f, w, 20f), "Erases every Rule Card, stage and best time.",
-                    RepositoryGUI.Text(12, TextAnchor.MiddleCenter, new Color(1f, .5f, .4f)));
-            by += confirmNewGame ? 74f : 54f;
+            {
+                GUI.Label(new Rect(x0 + 12f, by - 4f, colW, 20f), "Every Rule Card, stage and best time will be lost.",
+                    RuleCardsUI.ProseItalic(14, RuleCardsUI.Danger, TextAnchor.MiddleLeft));
+                by += 22f;
+            }
         }
         else
         {
-            if (GUI.Button(new Rect(bx, by, bw, 44f), "NEW GAME (Enter)")) NewGame();
-            by += 54f;
+            if (MenuItem(new Rect(x0 - 14f, by, bw, bh), "New Game", "Enter", true)) NewGame();
+            by += bh + 4f;
         }
-        if (GUI.Button(new Rect(bx, by, bw, 44f), "QUIT")) Quit();
+        if (MenuItem(new Rect(x0 - 14f, by, bw, bh), "Settings", null, false)) { settingsOpen = true; confirmNewGame = false; }
+        by += bh + 4f;
+        if (MenuItem(new Rect(x0 - 14f, by, bw, bh), "Quit", null, false)) Quit();
 
-        GUI.Label(new Rect(x, vh - 40f, w, 24f), "WASD move • Mouse look • E interact • Esc pause",
-            RepositoryGUI.Text(12, TextAnchor.MiddleCenter, new Color(.55f, .62f, .7f)));
+        GUI.Label(new Rect(x0, vh - 36f, vw - x0 * 2f, 20f), "WASD move   •   Mouse look   •   E interact   •   Esc pause",
+            RuleCardsUI.Label(13, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, .9f), TextAnchor.MiddleLeft));
         ResponsiveIMGUI.End(previous);
+    }
+
+    private static readonly string[] Numerals = { "I", "II", "III" };
+
+    private static string Spaced(string s)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (char c in s) { sb.Append(c); sb.Append(c == ' ' ? "  " : " "); }
+        return sb.ToString().TrimEnd();
+    }
+
+    private static void LeftRule(float x, float y, float width, float alpha)
+    {
+        RuleCardsUI.Diamond(new Vector2(x + 4f, y + .5f), 6f, RuleCardsUI.Gold, alpha);
+        RuleCardsUI.Gradient(new Rect(x + 12f, y, width, 1f), RepositoryGUI.WithAlpha(RuleCardsUI.Gold, .8f * alpha), RepositoryGUI.WithAlpha(RuleCardsUI.Gold, 0f), 16, true);
+    }
+
+    private static void StatLeft(Rect r, string label, string value, float alpha)
+    {
+        GUI.Label(new Rect(r.x, r.y, r.width, 16f), label, RuleCardsUI.Label(13, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, alpha)));
+        GUI.Label(new Rect(r.x, r.y + 16f, r.width, 30f), value, RuleCardsUI.Number(24, RepositoryGUI.WithAlpha(RuleCardsUI.Text, alpha), TextAnchor.MiddleLeft));
+    }
+
+    /// <summary>A menu line: hover reveals a gold bar and tint; optional key hint on the right.</summary>
+    private static string hoverLabel;
+
+    private static bool MenuItem(Rect r, string label, string hint, bool primary, bool danger = false)
+    {
+        bool hover = r.Contains(Event.current.mousePosition);
+        if (hover && hoverLabel != label) { hoverLabel = label; RuleCardsAudio.Ui(.22f, 1.6f); }
+        else if (!hover && hoverLabel == label) hoverLabel = null;
+        if (hover) RuleCardsUI.Gradient(r, new Color(.86f, .71f, .43f, .16f), new Color(.86f, .71f, .43f, 0f), 16, true);
+        if (hover || primary) RepositoryGUI.Fill(new Rect(r.x, r.y + 8f, 3f, r.height - 16f), hover ? RuleCardsUI.GoldBright : RepositoryGUI.WithAlpha(RuleCardsUI.Gold, .6f));
+        Color c = danger ? RuleCardsUI.Danger : hover ? Color.white : primary ? RuleCardsUI.GoldBright : RuleCardsUI.Text;
+        GUIStyle labelStyle = RuleCardsUI.Title(20, c, TextAnchor.MiddleLeft);
+        GUI.Label(new Rect(r.x + 14f, r.y, r.width - 20f, r.height), label, labelStyle);
+        if (!string.IsNullOrEmpty(hint))
+        {
+            // Key chip sits just after the label, so it reads as part of the item.
+            float lw = labelStyle.CalcSize(new GUIContent(label)).x;
+            GUIStyle hintStyle = RuleCardsUI.Label(12, RuleCardsUI.Muted, TextAnchor.MiddleCenter);
+            float hw = hintStyle.CalcSize(new GUIContent(hint)).x + 14f;
+            Rect chip = new Rect(r.x + 14f + lw + 14f, r.y + r.height * .5f - 10f, hw, 20f);
+            RepositoryGUI.Fill(chip, new Color(1f, 1f, 1f, .04f));
+            RepositoryGUI.Frame(chip, RepositoryGUI.WithAlpha(RuleCardsUI.Muted, .45f), 1f);
+            GUI.Label(chip, hint, hintStyle);
+        }
+        return GUI.Button(r, GUIContent.none, GUIStyle.none);
     }
 
     /// <summary>Nine slow card outlines drifting behind the title, three per rule colour.</summary>

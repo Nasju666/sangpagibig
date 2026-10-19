@@ -110,7 +110,7 @@ public class KineticConnectionPuzzle : MonoBehaviour
 
 void OnGUI()
     {
-        if(!open && (!focused || solved)) return;
+        if(!open && (!focused || solved || MouseLook.isPaused)) return;
 
         float vw, vh;
         Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
@@ -203,11 +203,12 @@ void InputGrid(Rect grid)
         {
             if(endpoint!=drawing || cell!=target){ Status("MATCH THE SAME COLOR"); return; }
             path.Add(cell); drawing=-1;
+            RuleCardsAudio.Play("connected",.6f,1f+.08f*EndColor(cell));
             if(Solved()) StartCoroutine(Complete());
             return;
         }
 
-        if(occupied[cell.x,cell.y]>=0){ Status("INTERSECTION BLOCKED"); return; }
+        if(occupied[cell.x,cell.y]>=0){ RuleCardsAudio.Play("deny",.35f); Status("INTERSECTION BLOCKED"); return; }
         occupied[cell.x,cell.y]=drawing; path.Add(cell);
     }
 
@@ -233,6 +234,7 @@ void InputGrid(Rect grid)
     IEnumerator Complete()
     {
         solved=true; Status("MATRIX STABLE — ARCHIVE WEIGHT RELEASED");
+        RuleCardsAudio.Play("solved",.9f);
         movableWeight.SetActive(true);
         movableWeight.transform.position=weightStartPosition;
         movableWeight.transform.rotation=Quaternion.Euler(weightStartEuler);

@@ -15,9 +15,11 @@ public class StageReturn : MonoBehaviour
         if (!RuleCardsProgress.HasCard(requiredCard))
         {
             message = "The Archive will not release you. Recover the Rule Card.";
+            RuleCardsAudio.Play("deny", .5f);
             return;
         }
         RuleCardsProgress.CompleteStage(stageId);
+        RuleCardsAudio.Play("portal", .9f);
         SceneManager.LoadScene(hubScene);
     }
 
@@ -25,7 +27,7 @@ public class StageReturn : MonoBehaviour
     void OnTriggerExit(Collider other) { if (other.GetComponent<CharacterController>() != null) { nearby = false; message = ""; } }
 void OnGUI()
     {
-        if (!nearby) return;
+        if (!nearby || MouseLook.isPaused) return;
         float vw, vh;
         Matrix4x4 previous = ResponsiveIMGUI.Begin(out vw, out vh);
         GUI.Box(ResponsiveIMGUI.BottomLeft(vw, vh, 540f, 65f),

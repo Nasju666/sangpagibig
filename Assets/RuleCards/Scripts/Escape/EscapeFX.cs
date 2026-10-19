@@ -173,6 +173,7 @@ public static class EscapeFX
     // ------------------------------------------------------------------ audio
     public static void Sfx(string name, float volume = .5f, float pitch = 1f)
     {
+        if (RuleCardsAudio.PlayFx(name, volume, pitch)) return; // real recorded clip
         if (audio == null) return;
         AudioClip clip;
         if (!clips.TryGetValue(name, out clip) || clip == null) { clip = Synth(name); clips[name] = clip; }

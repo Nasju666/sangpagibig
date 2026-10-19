@@ -9,6 +9,7 @@ public class PressurePlateDoor : MonoBehaviour
     public Rigidbody requiredWeight;
 public Renderer indicator;
     private Vector3 closedPosition;
+    private bool wasOccupied;
     
     private Collider plateZone;
     private Collider weightCollider;
@@ -33,6 +34,7 @@ void Update()
                         && plateZone != null
                         && plateZone.bounds.Intersects(weightCollider.bounds);
 
+        if (occupied != wasOccupied) { RuleCardsAudio.PlayAt("plate_click", transform.position, .9f, occupied ? 1f : .85f); wasOccupied = occupied; }
         Vector3 target = closedPosition + (occupied ? openOffset : Vector3.zero);
         door.position = Vector3.MoveTowards(door.position, target, speed * Time.deltaTime);
 

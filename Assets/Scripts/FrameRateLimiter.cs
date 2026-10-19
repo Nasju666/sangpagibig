@@ -1,10 +1,7 @@
 using UnityEngine;
 
+/// <summary>Applies the frame-rate cap / vsync from Settings in every scene (was a fixed 60 FPS).</summary>
 public class FrameRateLimiter : MonoBehaviour
 {
-    void Awake()
-    {
-        QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 60;
-    }
+    void Awake() { RuleCardsSettings.ApplyFrameRate(); }
 }
