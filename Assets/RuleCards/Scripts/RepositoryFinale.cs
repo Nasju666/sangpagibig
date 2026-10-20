@@ -116,6 +116,7 @@ public sealed class RepositoryFinale : MonoBehaviour
         AutoFind();
         DisablePlaceholderLogic();
         SetupNodes();
+        SwapCardModels();
         SetupCards();
         SetupAudio();
     }
@@ -240,11 +241,56 @@ public sealed class RepositoryFinale : MonoBehaviour
         }
     }
 
+    // The blockout cards are flat boxes. The sculpted Rule Card model (Art/Resources/RuleCardsHeldCard) is
+    // hung inside each one at the same size; the box stays as the (hidden) transform that the finale animates.
+    private Renderer[] cardVisuals = new Renderer[0];
+    private Material beamTemplate;
+
+    private void SwapCardModels()
+    {
+        int n = suspendedCards.Length;
+        cardVisuals = new Renderer[n];
+        if (n > 0) beamTemplate = suspendedCards[0].sharedMaterial;
+        GameObject model = Resources.Load<GameObject>("RuleCardsHeldCard");
+        for (int i = 0; i < n; i++)
+        {
+            Renderer box = suspendedCards[i];
+            cardVisuals[i] = box;
+            if (model == null || box == null) continue;
+            Transform t = box.transform;
+            Vector3 s = t.lossyScale;
+            if (s.x < .001f || s.y < .001f || s.z < .001f) continue;
+            float height = s.y;
+            var card = Instantiate(model, t, false);
+            card.name = t.name + "_Model";
+            foreach (Collider c in card.GetComponentsInChildren<Collider>()) Destroy(c);
+            // Undo the box's non-uniform scale so the model keeps its own proportions, height = box height.
+            card.transform.localScale = new Vector3(height / s.x, height / s.y, height / s.z);
+            card.transform.localPosition = new Vector3(0f, -.5f, 0f);   // model pivot is at its base
+            card.transform.localRotation = Quaternion.identity;
+            Renderer r = card.GetComponentInChildren<Renderer>();
+            if (r == null) { Destroy(card); continue; }
+            foreach (Renderer each in card.GetComponentsInChildren<Renderer>())
+            {
+                each.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                Material m = each.material;   // own instance so node tints stay per card
+                owned.Add(m);
+                if (m.HasProperty("_EmissionColor"))
+                {
+                    m.EnableKeyword("_EMISSION");
+                    m.SetColor("_EmissionColor", m.GetColor("_EmissionColor") * 1.8f);
+                }
+            }
+            box.enabled = false;
+            cardVisuals[i] = r;
+        }
+    }
+
     private Material CardMaterial(int i)
     {
         if (cardMaterials[i] == null)
         {
-            cardMaterials[i] = suspendedCards[i].material;
+            cardMaterials[i] = cardVisuals.Length > i && cardVisuals[i] != null ? cardVisuals[i].material : suspendedCards[i].material;
             owned.Add(cardMaterials[i]);
         }
         return cardMaterials[i];
@@ -463,6 +509,28 @@ public sealed class RepositoryFinale : MonoBehaviour
         if (node.glow != null) { node.glow.color = color; node.glow.intensity = lightIntensity; }
     }
 
+    // ------------------------------------------------------------------ trailer
+    /// <summary>Trailer: raise one node out of the floor (no progress is saved).</summary>
+    public void TrailerReveal(int index) { if (index >= 0 && index < 3 && nodeData[index] != null) RevealNode(index); }
+
+    /// <summary>Trailer: every node aligned and the restoration beam rises, without touching saves or the story.</summary>
+    public void TrailerFinale()
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            Node node = nodeData[i];
+            if (node == null) continue;
+            if (node.root != null) { node.root.gameObject.SetActive(true); node.root.localPosition = node.restLocal; }
+            node.state = NodeState.Solved;
+            for (int c = i; c < suspendedCards.Length; c += 3) Tint(CardMaterial(c), node.color, 2.2f);
+        }
+        if (finaleRunning) return;
+        finaleRunning = true;
+        finaleTime = 0f;
+        if (exitSeam != null) { seamMaterial = exitSeam.material; owned.Add(seamMaterial); }
+        BuildBeam();
+    }
+
     // ------------------------------------------------------------------ finale
     private void BeginFinale()
     {
@@ -486,7 +554,7 @@ public sealed class RepositoryFinale : MonoBehaviour
 
     private void BuildBeam()
     {
-        Material template = suspendedCards.Length > 0 ? suspendedCards[0].sharedMaterial
+        Material template = beamTemplate != null ? beamTemplate
             : exitSeam != null ? exitSeam.sharedMaterial : null;
         beam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         beam.name = "Repository_RestoredBeam";

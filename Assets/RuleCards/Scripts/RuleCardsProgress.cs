@@ -77,5 +77,6 @@ public static class RuleCardsProgress
         PlayerPrefs.Save();
         RuleCardsRunTimer.ResetRun();
         RuleCardsStory.ResetAll();
+        RuleCardsHubDisplay.ResetShown();
     }
 }

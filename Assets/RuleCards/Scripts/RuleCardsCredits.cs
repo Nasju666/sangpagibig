@@ -15,13 +15,9 @@ public static class RuleCardsCredits
 
     private static readonly Block[] Left =
     {
-        new Block("The team", "Kervie C. Roca|Project Manager",
-                              "Junas Amanence|Programmer",
-                              "Francis Niño Surban|UI/UX & Graphic Design",
-                              "John Lloyd Borces|Audio Design",
-                              "John Kyle C. Sondo|QA & Documentation"),
-        new Block("Built with", "Unity 2022 LTS · Universal Render Pipeline"),
-        new Block("3D models", "Generated with Hyper3D Rodin (Deemos)"),
+        new Block("Created by", "Nasju666", "@itch.io/profile/nasju666"),
+        new Block("3D models", "Made in Blender"),
+        new Block("Built with", "Unity"),
     };
 
     private static readonly Block[] Right =
@@ -88,6 +84,20 @@ public static class RuleCardsCredits
                 GUI.Label(new Rect(x, y + 1f, w, 22f), line.Substring(bar + 1).ToUpperInvariant(),
                     RuleCardsUI.Label(12, RuleCardsUI.Muted, TextAnchor.UpperRight));
                 y += 25f;
+                continue;
+            }
+            if (line.StartsWith("@"))
+            {
+                // "@url": a clickable link (opens in the browser), drawn as a muted underlined-cyan note.
+                string text = line.Substring(1);
+                GUIStyle link = RuleCardsUI.ProseItalic(15, RuleCardsUI.Cyan, TextAnchor.UpperLeft);
+                Vector2 size = link.CalcSize(new GUIContent(text));
+                Rect r = new Rect(x, y, Mathf.Min(size.x, w), 22f);
+                bool hover = r.Contains(Event.current.mousePosition);
+                GUI.Label(r, text, hover ? RuleCardsUI.ProseItalic(15, RuleCardsUI.GoldBright, TextAnchor.UpperLeft) : link);
+                RepositoryGUI.Fill(new Rect(r.x, r.y + 19f, r.width, 1f), hover ? RuleCardsUI.GoldBright : new Color(RuleCardsUI.Cyan.r, RuleCardsUI.Cyan.g, RuleCardsUI.Cyan.b, .5f));
+                if (GUI.Button(r, GUIContent.none, GUIStyle.none)) Application.OpenURL("https://" + text);
+                y += 24f;
                 continue;
             }
             bool isNote = line.StartsWith("via ") || line.StartsWith("SIL ") || line.StartsWith("and the ");

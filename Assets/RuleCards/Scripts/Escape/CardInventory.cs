@@ -153,6 +153,19 @@ public sealed class CardInventory : MonoBehaviour
         AnimateHeldCard(Time.deltaTime, allowed);
     }
 
+    /// <summary>Trailer autopilot: switch to a card and use it straight away (ignores input blocking and cooldown).</summary>
+    public bool TrailerUse(RuleCardKind kind)
+    {
+        Select((int)kind);
+        cooldownUntil[selected] = 0f;
+        if (tethering) return false;
+        bool used = kind == RuleCardKind.KineticLink ? UseKinetic() : kind == RuleCardKind.InvertGravity ? UseGravity() : UseAir();
+        if (used) useKick = 1f;
+        return used;
+    }
+
+    public void TrailerSelect(RuleCardKind kind) { Select((int)kind); }
+
     private void Select(int index)
     {
         if (index == selected) return;

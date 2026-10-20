@@ -110,6 +110,9 @@ public sealed class RuleCardsStory : MonoBehaviour
 
     public static bool Has(string id) { LoadScript(); return sequences.ContainsKey(id); }
 
+    /// <summary>Trailer recording: no automatic dialogue, cutscenes or barks (Glyph spawns hidden).</summary>
+    public static bool Suppressed;
+
     public static bool Seen(string id) { return PlayerPrefs.GetInt(SeenPrefix + id, 0) == 1; }
 
     /// <summary>Queue a sequence. With <paramref name="once"/>, a sequence already seen on this save is skipped
@@ -118,7 +121,7 @@ public sealed class RuleCardsStory : MonoBehaviour
     {
         LoadScript();
         Sequence seq;
-        if (instance == null || !sequences.TryGetValue(id, out seq) || (once && Seen(id)))
+        if (Suppressed || instance == null || !sequences.TryGetValue(id, out seq) || (once && Seen(id)))
         {
             if (onDone != null) onDone();
             return;
@@ -132,7 +135,7 @@ public sealed class RuleCardsStory : MonoBehaviour
     {
         LoadScript();
         Sequence seq;
-        if (instance == null || !sequences.TryGetValue(id, out seq)) return;
+        if (Suppressed || instance == null || !sequences.TryGetValue(id, out seq)) return;
         if (!instance.barkedThisScene.Add(id)) return;
         instance.EnqueueBark(seq, false);
     }
@@ -228,6 +231,7 @@ public sealed class RuleCardsStory : MonoBehaviour
         letterbox = 0f;
 
         if (!RuleCardsScenes.IsGameplay(scene.name)) return;
+        if (Suppressed) { GlyphGuide.Spawn(true); RuleCardsLore.SpawnFor(scene.name); return; }
 
         string id;
         if (scene.name == RuleCardsScenes.Hub)

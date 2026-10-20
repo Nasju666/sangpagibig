@@ -24,6 +24,8 @@ Pixabay (Pixabay Content License - free for games, no attribution required):
   Music/title     geoffharvey - magic in the air 43177
   Music/stages    kuzu420 - short chord ambiance loop 449557
   Music/repository samuelfjohanns - song from atlantis 246382
-Renamed by Nasju (check original source/license): connected.mp3, escape track.mp3 (Music/escape),
-  leveltitlecredits.mp3 (Music/ending), Pressure plate click.mp3 (plate_click),
-  stone door open close.mp3 (door_grind_loop, door_stop)
+Renamed by Nasju (also from Pixabay, Pixabay Content License - original titles not recorded):
+  connected.mp3, escape track.mp3 (Music/escape), leveltitlecredits.mp3 (Music/ending),
+  Pressure plate click.mp3 (plate_click), stone door open close.mp3 (door_grind_loop, door_stop)
+
+Trailer only (not in the game): Music "Fantasy Trailer" by The_Mountain (Pixabay 137043)

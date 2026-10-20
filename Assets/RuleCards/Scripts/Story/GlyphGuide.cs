@@ -14,6 +14,8 @@ public sealed class GlyphGuide : MonoBehaviour
     public static bool Speaking;
     /// <summary>Set by the story every frame: a cutscene shot is framing Glyph.</summary>
     public static bool Spotlight;
+    /// <summary>Trailer: follow this camera instead of Camera.main.</summary>
+    public static Camera CameraOverride;
 
     private enum Mode { Follow, Hidden, Leaving }
     private Mode mode = Mode.Follow;
@@ -371,7 +373,8 @@ public sealed class GlyphGuide : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (cam == null || !cam.isActiveAndEnabled)
+        if (CameraOverride != null) cam = CameraOverride;
+        if (cam == null || (!cam.isActiveAndEnabled && cam != CameraOverride))
         {
             cam = Camera.main;
             if (cam == null) return;

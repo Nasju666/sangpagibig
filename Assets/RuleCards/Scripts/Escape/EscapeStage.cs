@@ -357,6 +357,23 @@ public sealed class EscapeStage : MonoBehaviour
         if (exit.Intersects(player.bounds)) Finish();
     }
 
+    /// <summary>Trailer: start at a checkpoint with the collapse front a set distance behind, holding for a while.</summary>
+    public void TrailerStart(int checkpointIndex, float wallGap, float holdSeconds)
+    {
+        checkpointIndex = Mathf.Clamp(checkpointIndex, 0, checkpoints.Length - 1);
+        checkpoint = checkpointIndex;
+        Respawn(checkpointIndex, false);
+        wallS = checkpointS[checkpointIndex] - wallGap;
+        wallHoldUntil = Time.time + holdSeconds;
+        respawnFlash = 0f;
+        foreach (EscapeCrumble c in crumbles) if (c.Crumbled && c.SMax + 1f >= wallS) c.Restore();
+        if (floor != null) floor.ResetTo(wallS);
+        PlaceWall();
+        for (int z = 0; z < zones.Length; z++) zoneIntroduced.Add(z);
+    }
+
+    public EscapeCheckpoint TrailerCheckpoint(int index) { return checkpoints[Mathf.Clamp(index, 0, checkpoints.Length - 1)]; }
+
     private float PaceAt(float s)
     {
         if (pace == null || pace.Length == 0) return 1f;

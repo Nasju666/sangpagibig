@@ -1,16 +1,12 @@
 RULE CARDS - THE ARCHIVE
 
-THE TEAM
-  Kervie C. Roca ........ Project Manager
-  Junas Amanence ........ Programmer
-  Francis Nino Surban ... UI/UX & Graphic Design
-  John Lloyd Borces ..... Audio Design
-  John Kyle C. Sondo .... QA Testing & Documentation
-
-Built with Unity 2022 LTS (Universal Render Pipeline).
+CREATED BY
+  Nasju666 - https://itch.io/profile/nasju666
 
 3D MODELS
-  Generated with Hyper3D Rodin (Deemos) - https://hyper3d.ai
+  Made in Blender.
+
+Built with Unity.
 
 TYPEFACES (SIL Open Font License 1.1 - see Licenses/)
   Cinzel - Natanael Gama

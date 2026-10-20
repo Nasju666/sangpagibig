@@ -10,6 +10,15 @@ public class ArchiveGravityPlayer : MonoBehaviour
     public bool IsGrounded { get; private set; }
     /// <summary>While true, mouse look still works but walking/gravity are paused (used by Kinetic Link pulls).</summary>
     public bool MovementLocked { get; set; }
+    /// <summary>Trailer autopilot: when true, look and movement come from the fields below instead of mouse/keyboard.</summary>
+    public bool ExternalControl { get; set; }
+    public Vector2 ExternalMove { get; set; }
+    public bool ExternalJump { get; set; }
+    public bool ExternalSprint { get; set; }
+    public float Yaw { get { return yaw; } }
+    public float Pitch { get { return pitch; } }
+    public void SetLook(float newYaw, float newPitch) { yaw = newYaw; pitch = Mathf.Clamp(newPitch, -85, 85); transform.rotation = Quaternion.Euler(0, yaw, 0); }
+    bool Sprinting { get { return ExternalControl ? ExternalSprint : Input.GetKey(KeyCode.LeftShift); } }
     [Header("Feel")]
     public float coyoteTime=.12f, jumpBuffer=.15f;
     /// <summary>Extra field of view in degrees; decays by itself (e.g. a Kinetic pull adds a kick).</summary>
@@ -56,10 +65,15 @@ public class ArchiveGravityPlayer : MonoBehaviour
         float sign=IsInverted?-1:1;
         // Mouse deltas are per-frame already: no deltaTime, so look speed no longer depends on frame rate.
         float deg=RuleCardsSettings.LookDegreesPerUnit;
-        yaw+=Input.GetAxisRaw("Mouse X")*deg*sign;
-        pitch=Mathf.Clamp(pitch-Input.GetAxisRaw("Mouse Y")*deg*(RuleCardsSettings.InvertY?-1:1),-85,85);
+        if(!ExternalControl){
+            yaw+=Input.GetAxisRaw("Mouse X")*deg*sign;
+            pitch=Mathf.Clamp(pitch-Input.GetAxisRaw("Mouse Y")*deg*(RuleCardsSettings.InvertY?-1:1),-85,85);
+        }
         transform.rotation=Quaternion.Euler(0,yaw,0);
-        if(!MovementLocked) SimulateMovement(new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical")),Input.GetKeyDown(KeyCode.Space),Time.deltaTime);
+        if(!MovementLocked){
+            if(ExternalControl){SimulateMovement(ExternalMove,ExternalJump,Time.deltaTime);ExternalJump=false;}
+            else SimulateMovement(new Vector2(Input.GetAxisRaw("Horizontal"),Input.GetAxisRaw("Vertical")),Input.GetKeyDown(KeyCode.Space),Time.deltaTime);
+        }
         roll=Mathf.MoveTowardsAngle(roll,IsInverted?180:0,360*Time.deltaTime);
         if(viewCamera!=null){
             landDip=Mathf.MoveTowards(landDip,0,Time.deltaTime*1.1f);
@@ -70,7 +84,7 @@ public class ArchiveGravityPlayer : MonoBehaviour
             Vector3 shake=new Vector3(Mathf.PerlinNoise(n,.3f)-.5f,Mathf.PerlinNoise(.7f,n)-.5f,(Mathf.PerlinNoise(n,n*.5f)-.5f)*.6f)*(Shake*2f*motion);
             viewCamera.transform.localRotation=Quaternion.Euler(0,0,roll)*Quaternion.Euler(pitch,0,0)*Quaternion.Euler(shake);
             float baseFov=RuleCardsSettings.FieldOfView;
-            viewCamera.fieldOfView=Mathf.Lerp(viewCamera.fieldOfView,baseFov+(Input.GetKey(KeyCode.LeftShift)?10:0)+FovKick,1-Mathf.Exp(-8*Time.deltaTime));
+            viewCamera.fieldOfView=Mathf.Lerp(viewCamera.fieldOfView,baseFov+(Sprinting?10:0)+FovKick,1-Mathf.Exp(-8*Time.deltaTime));
         }
     }
 
@@ -103,7 +117,7 @@ public class ArchiveGravityPlayer : MonoBehaviour
             jumpPressedTime=-1;lastGroundedTime=-1;
         }
         Vector3 desired=(transform.right*input.x*(IsInverted?-1:1)+transform.forward*input.y);
-        desired=Vector3.ClampMagnitude(desired,1)*(Input.GetKey(KeyCode.LeftShift)?sprintSpeed:walkSpeed);
+        desired=Vector3.ClampMagnitude(desired,1)*(Sprinting?sprintSpeed:walkSpeed);
         planarVelocity=Vector3.Lerp(planarVelocity,desired,1-Mathf.Exp(-10*dt));
         verticalSpeed=Mathf.Clamp(verticalSpeed+gravity.y*gravityStrength*dt,-20,20);
         CollisionFlags flags=controller.Move((planarVelocity+Vector3.up*verticalSpeed)*dt);
